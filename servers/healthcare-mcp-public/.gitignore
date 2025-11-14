@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*.class
+*.so
+.Python
+venv/
+ENV/
+env.bak/
+venv.bak/
+*.egg-info/
+.pytest_cache/
+dist/
+build/
+htmlcov/
+.coverage
+
+# Environment variables and secrets
+.env
+*.pem
+*.key
+secrets/
+
+# Database
+*.db
+*.sqlite3
+healthcare_*.db
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# Docker
+.dockerignore
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Sensitive files and private components
+/src/private/
+payments_config.json
+stripe_keys.json

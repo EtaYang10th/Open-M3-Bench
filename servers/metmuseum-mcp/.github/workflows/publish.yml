@@ -1,0 +1,58 @@
+name: Publish to NPM
+on:
+  release:
+    types: [created]
+jobs:
+  publish-to-npm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.19.0
+          registry-url: https://registry.npmjs.org/
+          cache: npm
+      - name: Install dependencies and build 🔧
+        run: |
+          npm ci
+          npm run build || (echo "Build failed" && exit 1)
+      - name: Publish to NPM 📦
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+    permissions:
+      contents: read
+      id-token: write
+
+  create-dxt-release:
+    needs: publish-to-npm
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.19.0
+          cache: npm
+      - name: Install dependencies and build 🔧
+        run: |
+          npm ci
+          npm run build || (echo "Build failed" && exit 1)
+      - name: Install Anthropic DXT CLI
+        run: npm install -g @anthropic-ai/dxt
+      - name: Create DXT file
+        run: |
+          npm install --omit=dev
+          dxt pack
+      - name: Debug DXT file
+        run: |
+          ls -la *.dxt || echo "No .dxt files found"
+          find . -name "*.dxt" -type f || echo "No .dxt files found in subdirectories"
+      - name: Upload DXT to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ./metmuseum-mcp.dxt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    permissions:
+      contents: write
+      id-token: write

@@ -1,0 +1,200 @@
+# Python-generated files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# === PRIVACY PROTECTION - SENSITIVE FILES ===
+# Environment and configuration files with sensitive data
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+config.local.json
+secrets.json
+api_keys.txt
+credentials.json
+private_keys.txt
+*.pem
+*.key
+*.crt
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+access.log
+error.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.cover
+.hypothesis/
+.pytest_cache/
+htmlcov/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# PEP 582
+__pypackages__/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Spyder
+.spyderproject
+.spyproject
+
+# Rope
+.ropeproject
+
+# mkdocs
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Docker
+.dockerignore
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+*.old
+*.orig
+
+# Cache directories
+.cache/
+cache/
+.cache.py
+
+# Local development files
+dev/
+local/
+test_images/
+sample_images/
+user_data/
+private/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Configuration overrides
+config.override.json
+settings.local.py
+settings.private.py
+
+# SSL certificates
+ssl/
+certs/
+*.crt
+*.key
+*.pem
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Test output
+test_output/
+test_results/
+
+# Monitoring and metrics
+monitoring/
+metrics/
+.grafana/
+.prometheus/
+
+# Claude AI specific
+.claude/
+.claude-*
+
+# Local configuration
+local_config.json
+user_config.json
+personal_settings.json
+
+# API keys and tokens (additional patterns)
+*_api_key
+*_token
+*_secret
+*_password
+auth_tokens.txt
+session_tokens.txt
+
+# Cloud provider credentials
+.aws/
+.azure/
+.gcp/
+service-account.json
+credentials.json
+
+.claude/

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthcare MCP | Medical Information for AI Assistants</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .hero {
+            background: linear-gradient(135deg, #3a8dff, #86b7fe);
+            color: white;
+            padding: 80px 0;
+        }
+        .feature-card {
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            height: 100%;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: #3a8dff;
+        }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <div class="container text-center">
+            <h1 class="display-4 mb-4">Healthcare MCP Server</h1>
+            <p class="lead mb-5">Medical information for AI assistants through the Model Context Protocol</p>
+            <div>
+                <a href="https://github.com/Cicatriiz/healthcare-mcp" class="btn btn-light btn-lg me-3">View on GitHub</a>
+                <a href="https://github.com/Cicatriiz/healthcare-mcp#installation" class="btn btn-outline-light btn-lg">Installation Guide</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container my-5">
+        <div class="row mb-5">
+            <div class="col-md-8 mx-auto text-center">
+                <h2 class="mb-4">Access Medical Information in AI Conversations</h2>
+                <p class="lead text-muted">
+                    The Healthcare MCP Server connects AI assistants like Cline to authoritative medical information sources, enabling them to provide evidence-based health information during conversations.
+                </p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4 mb-4">
+                <div class="card feature-card h-100">
+                    <div class="card-body text-center">
+                        <div class="feature-icon">💊</div>
+                        <h5 class="card-title">FDA Drug Lookup</h5>
+                        <p class="card-text">Access comprehensive information about medications from the FDA database, including labeling and adverse events.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card feature-card h-100">
+                    <div class="card-body text-center">
+                        <div class="feature-icon">🔍</div>
+                        <h5 class="card-title">PubMed Research</h5>
+                        <p class="card-text">Search medical literature from PubMed's extensive database of scientific articles with filters for recency and relevance.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card feature-card h-100">
+                    <div class="card-body text-center">
+                        <div class="feature-icon">🩺</div>
+                        <h5 class="card-title">Health Topics</h5>
+                        <p class="card-text">Access evidence-based health information from Health.gov in multiple languages for general health inquiries.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card feature-card h-100">
+                    <div class="card-body text-center">
+                        <div class="feature-icon">🧪</div>
+                        <h5 class="card-title">Clinical Trials</h5>
+                        <p class="card-text">Search for ongoing and completed clinical trials by condition, status, and other parameters from ClinicalTrials.gov.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card feature-card h-100">
+                    <div class="card-body text-center">
+                        <div class="feature-icon">📝</div>
+                        <h5 class="card-title">Medical Terminology</h5>
+                        <p class="card-text">Look up ICD-10 codes and medical terminology definitions to understand diagnostic classifications.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card feature-card h-100">
+                    <div class="card-body text-center">
+                        <div class="feature-icon">⚡</div>
+                        <h5 class="card-title">Fast & Reliable</h5>
+                        <p class="card-text">Built with performance in mind, featuring intelligent caching to reduce API calls and provide faster responses.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card feature-card h-100">
+                    <div class="card-body text-center">
+                        <div class="feature-icon">🧪</div>
+                        <h5 class="card-title">Fully Tested</h5>
+                        <p class="card-text">Complete test suite for all tools ensures reliability and correct functionality.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-light py-5">
+        <div class="container">
+            <h2 class="text-center mb-5">Getting Started</h2>
+            <div class="row justify-content-center">
+                <div class="col-md-10">
+                    <div class="card">
+                        <div class="card-body">
+                            <h4>Install with Cline</h4>
+                            <p>The easiest way to use this MCP server is through the Cline Marketplace:</p>
+                            <ol>
+                                <li>Open Cline</li>
+                                <li>Click the Extensions button in the toolbar</li>
+                                <li>Search for "Healthcare MCP"</li>
+                                <li>Click Install</li>
+                            </ol>
+                            <h4 class="mt-4">Manual Installation</h4>
+                            <p>For manual installation or development:</p>
+                            <pre class="bg-dark text-light p-3 rounded"><code>git clone https://github.com/Cicatriiz/healthcare-mcp.git
+cd healthcare-mcp
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+python run.py</code></pre>
+                            <a href="https://github.com/Cicatriiz/healthcare-mcp#installation" class="btn btn-primary mt-3">View Full Instructions</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container my-5">
+        <div class="row">
+            <div class="col-md-6">
+                <h3>Sample Usage in Cline</h3>
+                <p>Once installed, you can access medical information directly in Cline conversations:</p>
+                <div class="bg-dark text-light p-3 rounded mb-4">
+                    <p class="mb-1"><strong>You:</strong> What are the side effects of metformin?</p>
+                    <p class="mb-1"><strong>Cline:</strong> According to the FDA database, common side effects of metformin include:</p>
+                    <ul>
+                        <li>Nausea and vomiting</li>
+                        <li>Diarrhea</li>
+                        <li>Abdominal discomfort</li>
+                        <li>Decreased vitamin B12 levels</li>
+                    </ul>
+                    <p>In rare cases, metformin can cause lactic acidosis, a serious condition that requires immediate medical attention.</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h3>API Access</h3>
+                <p>For developers, the MCP server exposes a FastAPI interface with interactive documentation:</p>
+                <pre class="bg-dark text-light p-3 rounded mb-4"><code># Start the HTTP server
+python run.py --http
+
+# Access the API docs at:
+# http://localhost:8000/docs</code></pre>
+                <p>The server supports both stdio transport (for Cline) and HTTP/SSE transport (for web clients).</p>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container text-center">
+            <p>Healthcare MCP Server is an open source project</p>
+            <div class="mb-3">
+                <a href="https://github.com/Cicatriiz/healthcare-mcp" class="text-white text-decoration-none mx-2">GitHub</a>
+                <a href="https://github.com/Cicatriiz/healthcare-mcp/issues" class="text-white text-decoration-none mx-2">Issues</a>
+                <a href="https://github.com/Cicatriiz/healthcare-mcp#license" class="text-white text-decoration-none mx-2">License</a>
+            </div>
+            <p class="small text-muted">This project is not affiliated with or endorsed by the FDA, NIH, or Health.gov</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

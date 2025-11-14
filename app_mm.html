@@ -1,0 +1,191 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>MCP Application</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 0; background: #0b1220; color: #e6e9ef; }
+    header { padding: 14px 16px; background: #0f172a; border-bottom: 1px solid #1f2937; }
+    .container { max-width: 920px; margin: 0 auto; padding: 16px; }
+    #chat { background: #0f172a; border: 1px solid #1f2937; border-radius: 12px; padding: 12px; height: 60vh; overflow: auto; }
+    .msg { padding: 8px 10px; margin: 6px 0; border-radius: 10px; line-height: 1.4; white-space: pre-wrap; }
+    .user { background: #1d2a44; }
+    .assistant { background: #162231; }
+    .tool { background: #1f2d3f; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .row { display: flex; gap: 8px; margin-top: 10px; }
+    textarea { flex: 1; min-height: 60px; resize: vertical; border-radius: 10px; border: 1px solid #334155; background: #0f172a; color: #e6e9ef; padding: 8px; }
+    input[type="text"] { border-radius: 10px; border: 1px solid #334155; background: #0f172a; color: #e6e9ef; padding: 8px; }
+    input[type="file"] { color: #e6e9ef; }
+    button { background: #2563eb; color: #fff; border: 0; padding: 10px 14px; border-radius: 10px; cursor: pointer; }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+    small { display: block; color: #9aa4b2; margin-top: 6px; }
+    .inputs { display:flex; flex-direction:column; gap:8px; width: 260px; }
+    .image-grid { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+    .image-grid img { max-width: 180px; max-height: 140px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; }
+  </style>
+</head>
+<body>
+  <header><strong>MCP Application</strong></header>
+  <div class="container">
+    <div id="chat"></div>
+    <div class="row">
+      <textarea id="msg" placeholder="input message…"></textarea>
+      <div class="inputs">
+        <input type="text" id="sid" placeholder="session_id (可选)"/>
+        <input type="file" id="imgs" accept="image/*" multiple/>
+        <button id="send">send</button>
+      </div>
+    </div>
+    <small>can upload multiple images. If tools are called, the tool calls and results will be displayed in the message; support multi-step tool chains.</small>
+  </div>
+<script>
+const chat = document.getElementById('chat');
+const msg = document.getElementById('msg');
+const sidInput = document.getElementById('sid');
+const imgs = document.getElementById('imgs');
+const send = document.getElementById('send');
+
+const savedSid = localStorage.getItem('sid') || '';
+if (savedSid) sidInput.value = savedSid;
+sidInput.addEventListener('change', () => localStorage.setItem('sid', sidInput.value));
+
+function add(role, text, cls) {
+  const div = document.createElement('div');
+  div.className = 'msg ' + (cls || (role === 'user' ? 'user' : 'assistant'));
+  div.textContent = (role === 'user' ? 'User: ' : 'Assistant: ') + text;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function normalizeImageUrl(u) {
+  if (!u) return u;
+  if (u.startsWith('/media/')) return u;
+  if (u.startsWith('http://') || u.startsWith('https://') || u.startsWith('data:image/')) return u;
+  // rewrite local absolute path /.../media/xxx.png to /media/xxx.png
+  if (u.startsWith('/')) {
+    const m = u.match(/\/media\/([^\/?#]+\.(?:png|jpg|jpeg|gif|webp|bmp|svg))(?:[?#].*)?$/i);
+    if (m) return '/media/' + m[1];
+  }
+  return u;
+}
+
+function addImages(title, urls) {
+  if (!urls || !urls.length) return;
+  const wrap = document.createElement('div');
+  wrap.className = 'msg tool';
+  const titleEl = document.createElement('div');
+  titleEl.textContent = (title || 'images');
+  wrap.appendChild(titleEl);
+  const grid = document.createElement('div');
+  grid.className = 'image-grid';
+  urls.forEach(u => {
+    if (!u) return;
+    const nu = normalizeImageUrl(u);
+    const a = document.createElement('a');
+    a.href = nu;
+    a.target = '_blank';
+    const img = document.createElement('img');
+    img.src = nu;
+    img.alt = 'image';
+    a.appendChild(img);
+    grid.appendChild(a);
+  });
+  wrap.appendChild(grid);
+  chat.appendChild(wrap);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function extractImageUrlsFromToolResult(tr) {
+  const urls = new Set();
+  if (!tr || typeof tr !== 'string') return [];
+  const dataUriRe = /data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+/g;
+  (tr.match(dataUriRe) || []).forEach(u => urls.add(normalizeImageUrl(u)));
+  const urlRe = /(https?:\/\/[^\s"')]+|\/[^\s"')]+)/g;
+  (tr.match(urlRe) || []).forEach(u => {
+    if (/(\.(png|jpg|jpeg|gif|webp|bmp|svg)(\?|#|$))/i.test(u) || u.startsWith('data:image/')) {
+      urls.add(normalizeImageUrl(u));
+    }
+  });
+  try {
+    const obj = JSON.parse(tr);
+    const walk = (v) => {
+      if (typeof v === 'string') {
+        if (/^data:image\/[a-zA-Z0-9.+-]+;base64,/.test(v) || /\.(png|jpg|jpeg|gif|webp|bmp|svg)(\?|#|$)/i.test(v) || v.startsWith('/media/')) {
+          urls.add(normalizeImageUrl(v));
+        }
+      } else if (Array.isArray(v)) {
+        v.forEach(walk);
+      } else if (v && typeof v === 'object') {
+        Object.values(v).forEach(walk);
+      }
+    };
+    walk(obj);
+  } catch (e) {}
+  return Array.from(urls);
+}
+
+async function sendMsg() {
+  const text = msg.value.trim();
+  const sid = sidInput.value.trim() || 'default';
+  const files = imgs.files;
+  if (!text && (!files || files.length === 0)) return;
+
+  add('user', text || (files && files.length ? '[images]' : ''), 'user');
+  send.disabled = true;
+
+  const fd = new FormData();
+  fd.append('text', text);
+  fd.append('session_id', sid);
+  if (files && files.length) {
+    for (let i = 0; i < files.length; i++) {
+      fd.append('images', files[i]);
+    }
+  }
+
+  const res = await fetch('/api/chat', { method: 'POST', body: fd });
+  const j = await res.json();
+
+  if (j.images && j.images.length) {
+    const urls = j.images.map(img => (img && img.url) ? img.url : '').filter(Boolean);
+    if (urls.length) addImages('loaded images', urls);
+  }
+  // show all tool calls in steps order
+  if (Array.isArray(j.steps) && j.steps.length) {
+    j.steps.forEach((st, idx) => {
+      if (st && st.tool_call) {
+        add('assistant', `[step${idx+1} tool call]${JSON.stringify(st.tool_call)}`, 'tool');
+      }
+      if (st && st.tool_result) {
+        add('assistant', st.tool_result, 'tool');
+        const imgs = extractImageUrlsFromToolResult(st.tool_result);
+        if (imgs.length) addImages(`step${idx+1} tool result`, imgs);
+      }
+    });
+  } else {
+    // show only the last tool call
+    if (j.tool_call) {
+      add('assistant', `[tool call]${JSON.stringify(j.tool_call)}`, 'tool');
+    }
+    if (j.tool_result) {
+      add('assistant', j.tool_result, 'tool');
+      const toolImgs = extractImageUrlsFromToolResult(j.tool_result);
+      if (toolImgs.length) addImages('tool result images', toolImgs);
+    }
+  }
+  if (j.reply) {
+    add('assistant', j.reply, 'assistant');
+  }
+
+  send.disabled = false;
+  msg.value = '';
+  imgs.value = '';
+}
+
+send.addEventListener('click', sendMsg);
+msg.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) sendMsg();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "vllm-mcp"
+version = "0.1.0"
+description = "MCP server that enables text models to call multimodal models"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+    { name = "StanleyChanH" },
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+    "mcp>=1.16.0",
+    "openai>=2.1.0",
+    "dashscope>=1.24.6",
+    "aiofiles>=24.1.0",
+    "pydantic>=2.11.9",
+    "python-dotenv>=1.1.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "black>=24.0.0",
+    "isort>=5.13.0",
+    "mypy>=1.8.0",
+    "watchfiles>=0.21.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/StanleyChanH/vllm-mcp"
+Repository = "https://github.com/StanleyChanH/vllm-mcp"
+Issues = "https://github.com/StanleyChanH/vllm-mcp/issues"
+
+[project.scripts]
+vllm-mcp = "vllm_mcp.server:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/vllm_mcp"]
+
+[tool.black]
+line-length = 88
+target-version = ['py311']
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
