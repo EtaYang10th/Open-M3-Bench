@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "yolo-service": {
+      "command": "D:\\BackDataService\\YOLO-MCP-Server\\.venv\\Scripts\\python.exe",
+      "args": [
+        "D:\\BackDataService\\YOLO-MCP-Server\\server.py"
+      ],
+      "env": {
+        "PYTHONPATH": "D:\\BackDataService\\YOLO-MCP-Server"
+      }
+    }
+  }
+}

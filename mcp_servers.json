@@ -1,0 +1,174 @@
+{
+  "servers":
+  {
+    "weather": {"_comment": "weather service","command": "python",
+      "args": ["servers/weather_mcp.py"],
+      "env": {}
+    },
+    "wiki": {
+      "_comment": "wiki service",
+      "command": "python",
+      "args": ["servers/wiki_mcp.py"],
+      "env": {}
+    },
+    "ocr": {
+      "_comment": "OCR service, image to text",
+      "command": "python",
+      "args": ["-m", "mcp_ocr"],
+      "env": {
+      }
+      },
+    "yolo-service": {
+      "_comment": "yolo service, object detection",
+      "command": "servers/yolo-mcp-service/.venv/bin/python",
+      "args": [
+        "servers/yolo-mcp-service/server.py"
+      ],
+      "env": {},
+      "disabled": true
+      },
+    "vllm-mcp": {
+      "command": "servers/vllm-mcp/.venv/bin/python",
+      "args": ["-m", "vllm_mcp.server"],
+      "disabled": true,
+      "env": {
+        "PYTHONPATH": "servers/vllm-mcp/src"
+      }
+    },
+    "amazon": {
+      "command": "python",
+      "args": ["servers/amazon_mcp.py"],
+      "env": {
+      }
+    },
+    "google-maps": {
+      "command": "python",
+      "args": ["servers/google_maps_mcp.py"],
+      "env": {
+      }
+    },
+    "tmdb": {
+      "command": "node",
+      "args": ["servers/tmdb-mcp-server/dist/index.js"],
+      "env": {
+      },
+      "disabled": false,
+      "autoApprove": []
+    },
+    "pyzbar-mcp": {
+      "_comment": "Barcode and QR code scanning MCP — decodes EAN13, UPC, or QR codes from product labels, books, or packaging images",
+      "command": "python",
+      "args": ["servers/pyzbar_mcp.py"],
+      "env": {}
+    },
+    "openlibrary_mcp": {
+      "_comment": "OpenLibrary MCP service for searching books and metadata",
+      "command": "python",
+      "args": ["servers/openlibrary_mcp.py"],
+      "env": {}
+    },
+    "imagesorcery-mcp": {
+      "_comment": "ImageSorcery MCP service — provides image editing tools (crop, blur, etc.)",
+      "command": "python",
+      "args": ["servers/imagesorcery_mcp.py"],
+      "env": {},
+      "disabled": false
+    },
+    "healthcare-mcp": {
+      "_comment": "Healthcare MCP service (FDA, PubMed, Health Topics, Clinical Trials)",
+      "command": "node",
+      "args": [
+        "servers/healthcare-mcp-public/server/index.js"
+      ],
+      "env": {},
+      "disabled": false
+    },
+    "food_nutrition_mcp": {
+      "_comment": "Food and Nutrition MCP service (Nutritionix API)",
+      "command": "python",
+      "args": ["servers/food_nutrition_mcp.py"],
+      "env": {
+        "EDAMAM_APP_ID": "3a9bd8a1",
+        "EDAMAM_APP_KEY": "357f43235e782022d5808df950516ed6"
+        },
+      "disabled": false
+    },
+    "dinox-mcp": {
+      "command": "node",
+      "args": ["servers/DINO-X-MCP/build/index.js"],
+      "disabled": false,
+      "env": {
+        "IMAGE_STORAGE_DIRECTORY": "media"
+      }
+    },
+    "linkimage-mcp": {
+      "_comment": "Fetch and extract main image from a webpage URL",
+      "command": "python",
+      "args": ["servers/linkimage_mcp.py"],
+      "env": {},
+      "disabled": false
+    },
+    "google-air": {
+      "command": "python",
+      "args": ["servers/google_air_mcp.py"],
+      "env": {}
+    },
+    "ppt": {
+      "command": "python",
+      "args": ["servers/Office-PowerPoint-MCP-Server/ppt_mcp_server.py"],
+      "env": {
+        "OUTPUT_DIR": "./media",
+        "ENFORCE_OUTPUT_DIR": "true"
+      }
+    },
+    "Reddit-MCP-Server": {
+          "_comment": "Reddit content fetcher",
+          "command": "python",
+          "args": ["servers/reddit_mcp.py"],
+          "env": {
+            "REDDIT_CLIENT_ID": "SUu_B8LSrJkuDiUx5tSA7A",
+            "REDDIT_CLIENT_SECRET": "IXO6tkZlrkN3cUGY3GBBZwlf-7KsCQ",
+            "REDDIT_REFRESH_TOKEN": "1674295730841-WI4npHTjK70UpDjQaiSitM63t9QidA"
+      }
+    },
+    "excel": {
+      "_comment": "Excel MCP Server manipulate .xlsx files",
+      "command": "uvx",
+      "args": ["excel-mcp-server", "stdio"],
+      "env": {
+        "EXCEL_FILES_PATH": "media"
+      },
+      "disabled": false
+    },
+    "nationalparks": {
+      "_comment": "National Parks MCP Server (U.S. NPS API integration — park info, campgrounds, alerts, visitor centers, events)",
+      "command": "node",
+      "args": ["servers/mcp-server-nationalparks/build/index.js"],
+      "env": {},
+      "disabled": false
+    },
+    "paper_search": {
+      "_comment": "Academic Paper Search MCP Server (arXiv / PubMed / bioRxiv / medRxiv / IACR / Semantic Scholar)",
+      "command": "uv",
+     "args": [
+        "run",
+        "--directory",
+        "servers/paper-search-mcp",
+       "-m",
+        "paper_search_mcp.server"
+      ],
+      "env": {
+      },
+      "disabled": false
+    },
+    "metmuseum-mcp": {
+      "_comment": "Metropolitan Museum of Art Collection API MCP Server",
+      "command": "node",
+      "args": [
+        "servers/metmuseum-mcp/dist/index.js"
+      ],
+      "env": {},
+      "disabled": false
+    }
+  }
+}

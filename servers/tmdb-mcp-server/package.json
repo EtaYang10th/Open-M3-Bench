@@ -1,0 +1,21 @@
+{
+  "name": "tmdb-mcp-server",
+  "version": "1.0.0",
+  "description": "TMDB MCP Server for accessing The Movie Database API",
+  "main": "dist/index.js",
+  "scripts": {
+    "clean": "rm -rf dist",
+    "prebuild": "npm run clean",
+    "build": "tsc",
+    "postbuild": "chmod +x dist/index.js"
+  },
+  "type": "module",
+  "devDependencies": {
+    "@types/node": "^16.18.126",
+    "typescript": "^5.8.2"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.7.0",
+    "axios": "^1.8.3"
+  }
+}

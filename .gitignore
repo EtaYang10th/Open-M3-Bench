@@ -1,13 +1,12 @@
-*.png
 *.pdf
 *.ppt
 *.pptx
-*.xlsx
-*.json
-results/
+
+.env
+
 media/
 save/
 log/
 tools/
-.env
 __pycache__/
+

@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "vllm-mcp": {
+      "command": "uv",
+      "args": [
+        "run",
+        "python",
+        "-m",
+        "vllm_mcp.server",
+        "--transport",
+        "stdio",
+        "--log-level",
+        "INFO"
+      ],
+      "env": {
+        "PYTHONPATH": "src",
+        "OPENAI_API_KEY": "${OPENAI_API_KEY}",
+        "DASHSCOPE_API_KEY": "${DASHSCOPE_API_KEY}"
+      }
+    }
+  }
+}

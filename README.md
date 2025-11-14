@@ -61,7 +61,7 @@ cp .env_example .env
 
 MCP tools across servers 🧰:
 
-<img src="mcp_tools_per_server.png" alt="MCP tools per server" width="800" />
+<img src="mcp_tools_per_server.png" alt="MCP tools per server" width="700" />
 
 > Image assets download: To view all figures and example screenshots locally, download the `images/` folder from our Google Drive and place it at the repository root.
 >

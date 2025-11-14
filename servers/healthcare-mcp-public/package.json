@@ -1,0 +1,37 @@
+{
+  "name": "healthcare-mcp",
+  "version": "2.1.1",
+  "description": "Healthcare MCP Server for medical information access",
+  "type": "module",
+  "main": "server/index.js",
+  "bin": {
+    "healthcare-mcp": "server/index.js"
+  },
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "test": "node --test",
+    "server:http": "node server/http-server.js"
+  },
+  "keywords": [
+    "healthcare",
+    "medical",
+    "mcp",
+    "fda",
+    "pubmed",
+    "clinical-trials",
+    "icd-10",
+    "mcp-server"
+  ],
+  "author": "Cicatriiz",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "node-fetch": "^3.3.2",
+    "node-cache": "^5.1.2",
+    "sqlite3": "^5.1.6"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
