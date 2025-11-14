@@ -37,6 +37,10 @@ conda install -r requirements_conda.txt  # if provided
 - MCP servers: edit `mcp_servers.json` at repo root (enable/disable servers, args, env vars).
 - Model/API keys: create a `.env` at repo root and fill keys such as:
   - `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_API_KEY`, `XAI_API_KEY`, `DEEPSEEK_API_KEY`, `ZHIPU_API_KEY`, ...
+- Quick setup for `.env`:
+```bash
+cp .env_example .env
+```
 - Data paths: default GT/PRED paths in scripts can be adjusted (see `scripts/evaluate_*.sh`). All scripts now use repo‑relative paths by default.
 
 ---
