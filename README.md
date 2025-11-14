@@ -63,7 +63,9 @@ MCP tools across servers 🧰:
 
 <img src="mcp_tools_per_server.png" alt="MCP tools per server" width="800" />
 
----
+> Image assets download: To view all figures and example screenshots locally, download the `images/` folder from our Google Drive and place it at the repository root.
+>
+> Download link: [Google Drive folder](https://drive.google.com/drive/folders/1Szrfg-wix29leVqyudTXjz_GqhMyX8vQ?usp=drive_link)
 
 ## Quick Start 🚀
 
