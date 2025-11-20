@@ -121,6 +121,12 @@ Then open the reported URL. Uploaded images are injected as data URLs for the mo
 
 ---
 
+## Changelog 📝
+
+- 2025-11-20: Initial public release of M3‑Bench.
+
+---
+
 ## License 📄
 
 Released under the MIT License. See `LICENSE` for details.
