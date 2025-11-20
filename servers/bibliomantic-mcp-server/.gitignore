@@ -1,0 +1,88 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+mcp-env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+
+# Local configuration
+.env.local
+config.local.json
+
+# MCP development
+.mcp/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Legacy files from development process
+server.py
+mcp_server.py
+claude_client.py
+start_server.py
+client_example.py
+test_system.py
+test_imports.py
+demo.py
+claude_desktop_config*.json
+*_SETUP.md
+*_FIXED.md
+TROUBLESHOOTING.md
+cleanup_for_github.sh
+test_fastmcp_migration.py
+run_server.py
+
+# Documentation artifacts
+DOCUMENTATION_UPDATE_SUMMARY.md
+CLEANUP_SUMMARY.md
+MCP_SUBMISSION_CHECKLIST.md
+ETHICAL_SAFEGUARDS.md

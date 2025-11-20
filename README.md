@@ -1,4 +1,3 @@
-
 # M3‑Bench 
 <p align="center">
 <img src="m3_logo.jpg" alt="M3‑Bench Logo" width="240" />

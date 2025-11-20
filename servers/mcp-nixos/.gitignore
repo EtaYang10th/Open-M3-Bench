@@ -1,0 +1,99 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+mcp_nixos_test_cache/
+*test_cache*/
+
+# Environments
+.env
+.env.local
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Nix
+.direnv/
+result
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+.vscode/
+
+# MCP local configuration
+.mcp.json
+.mcp-nix.json
+
+# Misc
+temp
+tmp
+# Explicitly don't ignore uv.lock (we need to track it)
+uv-*.lock
+.aider*
+.pypirc
+mcp-completion-docs.md
+TODO.md
+
+# Wily
+.wily/
+
+# Logs
+*.log
+*.DS_Store
+
+# Website (Next.js)
+/website/node_modules/
+/website/.next/
+/website/out/
+/website/.vercel/
+/website/.env*.local
+/website/npm-debug.log*
+/website/yarn-debug.log*
+/website/yarn-error.log*
+/website/pnpm-debug.log*
+/website/.pnpm-store/
+/website/.DS_Store
+/website/*.pem
+reference-mcp-coroot/

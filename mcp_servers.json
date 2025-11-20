@@ -169,6 +169,71 @@
       ],
       "env": {},
       "disabled": false
+    },
+    "nasa-mcp": {
+      "_comment": "NASA API Integration MCP Server (APOD, Asteroids, DONKI, EPIC, Earth imagery, Exoplanets)",
+      "command": "uvx",
+      "args": [
+        "nasa_mcp"
+      ],
+      "env": {
+      },
+      "disabled": false
+    },
+    "okx": {
+      "_comment": "OKX cryptocurrency price/query MCP Server",
+      "command": "node",
+      "args": [
+        "servers/okx-mcp/build/index.js"
+      ],
+      "env": {},
+      "disabled": false,
+      "autoApprove": []
+    },
+    "hugeicons-mcp": {
+      "_comment": "Hugeicons Integration MCP Server",
+      "command": "node",
+      "args": [
+        "servers/hugeicons/build/index.js"
+      ],
+      "env": {},
+      "disabled": false,
+      "autoApprove": []
+    },
+    "yahoo-finance": {
+      "_comment": "Yahoo Finance MCP Server — provides stock prices, financial statements, holders, options, and recommendations via yfinance API",
+      "command": "python",
+      "args": ["servers/yahoo.py"],
+      "env": {},
+      "disabled": false
+    },
+    "math": {
+      "_comment": "Math MCP Server — provides arithmetic, statistical, and trigonometric functions",
+      "command": "node",
+      "args": ["servers/math-mcp/build/index.js"],
+      "env": {},
+      "disabled": false,
+      "autoApprove": []
+    },
+    "nixos": {
+      "_comment": "MCP-NixOS — query real NixOS package, options, Home Manager, and Darwin data",
+      "command": "uvx",
+      "args": ["mcp-nixos"],
+      "env": {
+        "ELASTICSEARCH_URL": "https://search.nixos.org/backend"
+      },
+      "disabled": false,
+      "autoApprove": []
+    },
+    "car-price": {
+      "_comment": "Car Price MCP Server — provides real-time Brazilian vehicle pricing via FIPE API",
+      "command": "python",
+      "args": ["servers/car-price-mcp-main/server.py"],
+      "env": {
+        "FIPE_API_URL": "https://parallelum.com.br/fipe/api/v1"
+      },
+      "disabled": false,
+      "autoApprove": []
     }
   }
 }
