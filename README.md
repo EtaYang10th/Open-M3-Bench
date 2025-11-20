@@ -13,6 +13,12 @@ A lightweight benchmarking and analysis suite around the Model Context Protocol 
 
 ---
 
+## Changelog 📝
+
+- 2025-11-20: Initial public release of M3‑Bench.
+
+---
+
 ## Environment & Installation 🛠️
 
 - Python 3.11 (recommended)
@@ -119,11 +125,6 @@ Then open the reported URL. Uploaded images are injected as data URLs for the mo
 - Missing outputs: check `results/` existence, correct `PRED_PATH/GT_PATH`, and that the model list includes your model.
 - MCP tools unavailable: ensure the server is enabled in `mcp_servers.json` or run the server locally to debug.
 
----
-
-## Changelog 📝
-
-- 2025-11-20: Initial public release of M3‑Bench.
 
 ---
 
