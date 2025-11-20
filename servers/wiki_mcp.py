@@ -23,15 +23,12 @@ _session.mount("https://", HTTPAdapter(max_retries=_retry))
 @server.tool()
 def search(query: str, n: int = 3) -> str:
     """
-    Search Wikipedia for pages matching a query and return top titles.
-
-    Args:
+      Search Wikipedia for pages matching a query and return top titles.
+      Args:
         query (str): Free-text search query.
-        n (int): Number of results to return (1–10).
-
-    Returns:
-        str: Plain text starting with "Top results:" followed by up to `n` titles,
-            or "No results." when none are found.
+        n (int): Number of results to include (1–10).
+      Returns:
+        result (str): Plain-text list of up to n titles or a no-results message.
     """
     params = {
         "action": "query", "format": "json", "list": "search",
@@ -59,15 +56,11 @@ def search(query: str, n: int = 3) -> str:
 @server.tool()
 def summary(title: str) -> str:
     """
-    Fetch the Wikipedia summary for a given page title.
-
-    Args:
+      Fetch a short Wikipedia summary for the given page title.
+      Args:
         title (str): Exact or redirectable page title.
-
-    Returns:
-        str: Plain text formatted as:
-            "**{Title}**\n{Description}\n\n{Extract}"
-            where Description and Extract may be empty.
+      Returns:
+        result (str): Plain-text block with title, short description, and extract.
     """
     
     r = _session.get(

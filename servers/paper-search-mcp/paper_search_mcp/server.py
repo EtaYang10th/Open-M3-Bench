@@ -42,17 +42,14 @@ async def async_search(searcher, query: str, max_results: int, **kwargs) -> List
 
 @mcp.tool()
 async def search_arxiv(query: str, max_results: int = 10) -> List[Dict]:
-    """Search academic papers from arXiv.
-
+    """
+    Search academic papers from arXiv.
     Args:
-        query: Search query string (e.g., 'machine learning').
-        max_results: Maximum number of papers to return (default: 10).
+      query (str): Search query text.
+      max_results (int): Maximum number of papers to return.
 
     Returns:
-        List of paper metadata in dictionary format.
-
-    Raises:
-        TypeError: If returned papers are not a list of dictionaries.
+      papers (List[Dict]): Paper metadata as dictionaries.
     """
     papers = await async_search(arxiv_searcher, query, max_results)
 
@@ -70,13 +67,15 @@ async def search_arxiv(query: str, max_results: int = 10) -> List[Dict]:
 
 @mcp.tool()
 async def search_pubmed(query: str, max_results: int = 10) -> List[Dict]:
-    """Search academic papers from PubMed.
+    """
+    Search academic papers from PubMed.
 
     Args:
-        query: Search query string (e.g., 'machine learning').
-        max_results: Maximum number of papers to return (default: 10).
+      query (str): Search query text.
+      max_results (int): Maximum number of papers to return.
+
     Returns:
-        List of paper metadata in dictionary format.
+      papers (List[Dict]): Paper metadata as dictionaries.
     """
     papers = await async_search(pubmed_searcher, query, max_results)
     return papers if papers else []
@@ -84,13 +83,15 @@ async def search_pubmed(query: str, max_results: int = 10) -> List[Dict]:
 
 @mcp.tool()
 async def search_biorxiv(query: str, max_results: int = 10) -> List[Dict]:
-    """Search academic papers from bioRxiv.
+    """
+    Search academic papers from bioRxiv.
 
     Args:
-        query: Search query string (e.g., 'machine learning').
-        max_results: Maximum number of papers to return (default: 10).
+      query (str): Search query text.
+      max_results (int): Maximum number of papers to return.
+
     Returns:
-        List of paper metadata in dictionary format.
+      papers (List[Dict]): Paper metadata as dictionaries.
     """
     papers = await async_search(biorxiv_searcher, query, max_results)
     return papers if papers else []
@@ -98,13 +99,15 @@ async def search_biorxiv(query: str, max_results: int = 10) -> List[Dict]:
 
 @mcp.tool()
 async def search_medrxiv(query: str, max_results: int = 10) -> List[Dict]:
-    """Search academic papers from medRxiv.
+    """
+    Search academic papers from medRxiv.
 
     Args:
-        query: Search query string (e.g., 'machine learning').
-        max_results: Maximum number of papers to return (default: 10).
+      query (str): Search query text.
+      max_results (int): Maximum number of papers to return.
+
     Returns:
-        List of paper metadata in dictionary format.
+      papers (List[Dict]): Paper metadata as dictionaries.
     """
     papers = await async_search(medrxiv_searcher, query, max_results)
     return papers if papers else []
@@ -112,13 +115,15 @@ async def search_medrxiv(query: str, max_results: int = 10) -> List[Dict]:
 
 @mcp.tool()
 async def search_google_scholar(query: str, max_results: int = 10) -> List[Dict]:
-    """Search academic papers from Google Scholar.
+    """
+    Search academic papers from Google Scholar.
 
     Args:
-        query: Search query string (e.g., 'machine learning').
-        max_results: Maximum number of papers to return (default: 10).
+      query (str): Search query text.
+      max_results (int): Maximum number of papers to return.
+
     Returns:
-        List of paper metadata in dictionary format.
+      papers (List[Dict]): Paper metadata as dictionaries.
     """
     papers = await async_search(google_scholar_searcher, query, max_results)
     return papers if papers else []
@@ -128,14 +133,16 @@ async def search_google_scholar(query: str, max_results: int = 10) -> List[Dict]
 async def search_iacr(
     query: str, max_results: int = 10, fetch_details: bool = True
 ) -> List[Dict]:
-    """Search academic papers from IACR ePrint Archive.
+    """
+    Search academic papers from the IACR ePrint Archive.
 
     Args:
-        query: Search query string (e.g., 'cryptography', 'secret sharing').
-        max_results: Maximum number of papers to return (default: 10).
-        fetch_details: Whether to fetch detailed information for each paper (default: True).
+      query (str): Search query text.
+      max_results (int): Maximum number of papers to return.
+      fetch_details (bool): Whether to fetch detailed metadata.
+
     Returns:
-        List of paper metadata in dictionary format.
+      papers (List[Dict]): Paper metadata as dictionaries.
     """
     async with httpx.AsyncClient() as client:
         papers = iacr_searcher.search(query, max_results, fetch_details)
@@ -144,13 +151,15 @@ async def search_iacr(
 
 @mcp.tool()
 async def download_arxiv(paper_id: str, save_path: str = "./downloads") -> str:
-    """Download PDF of an arXiv paper.
+    """
+    Download the PDF of an arXiv paper.
 
     Args:
-        paper_id: arXiv paper ID (e.g., '2106.12345').
-        save_path: Directory to save the PDF (default: './downloads').
+      paper_id (str): arXiv identifier.
+      save_path (str): Directory to save the PDF.
+
     Returns:
-        Path to the downloaded PDF file.
+      path (str): File path of the downloaded PDF.
     """
     async with httpx.AsyncClient() as client:
         return arxiv_searcher.download_pdf(paper_id, save_path)
@@ -158,13 +167,15 @@ async def download_arxiv(paper_id: str, save_path: str = "./downloads") -> str:
 
 @mcp.tool()
 async def download_pubmed(paper_id: str, save_path: str = "./downloads") -> str:
-    """Attempt to download PDF of a PubMed paper.
+    """
+    Attempt to download the PDF of a PubMed paper.
 
     Args:
-        paper_id: PubMed ID (PMID).
-        save_path: Directory to save the PDF (default: './downloads').
+      paper_id (str): PubMed ID (PMID).
+      save_path (str): Directory to save the PDF.
+
     Returns:
-        str: Message indicating that direct PDF download is not supported.
+      message (str): Status or explanation of download support.
     """
     try:
         return pubmed_searcher.download_pdf(paper_id, save_path)
@@ -174,52 +185,60 @@ async def download_pubmed(paper_id: str, save_path: str = "./downloads") -> str:
 
 @mcp.tool()
 async def download_biorxiv(paper_id: str, save_path: str = "./downloads") -> str:
-    """Download PDF of a bioRxiv paper.
+    """
+    Download the PDF of a bioRxiv paper.
 
     Args:
-        paper_id: bioRxiv DOI.
-        save_path: Directory to save the PDF (default: './downloads').
+      paper_id (str): bioRxiv DOI.
+      save_path (str): Directory to save the PDF.
+
     Returns:
-        Path to the downloaded PDF file.
+      path (str): File path of the downloaded PDF.
     """
     return biorxiv_searcher.download_pdf(paper_id, save_path)
 
 
 @mcp.tool()
 async def download_medrxiv(paper_id: str, save_path: str = "./downloads") -> str:
-    """Download PDF of a medRxiv paper.
+    """
+    Download the PDF of a medRxiv paper.
 
     Args:
-        paper_id: medRxiv DOI.
-        save_path: Directory to save the PDF (default: './downloads').
+      paper_id (str): medRxiv DOI.
+      save_path (str): Directory to save the PDF.
+
     Returns:
-        Path to the downloaded PDF file.
+      path (str): File path of the downloaded PDF.
     """
     return medrxiv_searcher.download_pdf(paper_id, save_path)
 
 
 @mcp.tool()
 async def download_iacr(paper_id: str, save_path: str = "./downloads") -> str:
-    """Download PDF of an IACR ePrint paper.
+    """
+    Download the PDF of an IACR ePrint paper.
 
     Args:
-        paper_id: IACR paper ID (e.g., '2009/101').
-        save_path: Directory to save the PDF (default: './downloads').
+      paper_id (str): IACR ePrint identifier.
+      save_path (str): Directory to save the PDF.
+
     Returns:
-        Path to the downloaded PDF file.
+      path (str): File path of the downloaded PDF.
     """
     return iacr_searcher.download_pdf(paper_id, save_path)
 
 
 @mcp.tool()
 async def read_arxiv_paper(paper_id: str, save_path: str = "./downloads") -> str:
-    """Read and extract text content from an arXiv paper PDF.
+    """
+    Read and extract text content from an arXiv paper PDF.
 
     Args:
-        paper_id: arXiv paper ID (e.g., '2106.12345').
-        save_path: Directory where the PDF is/will be saved (default: './downloads').
+      paper_id (str): arXiv identifier.
+      save_path (str): Directory where the PDF is or will be stored.
+
     Returns:
-        str: The extracted text content of the paper.
+      text (str): Extracted plain text content.
     """
     try:
         return arxiv_searcher.read_paper(paper_id, save_path)
@@ -230,26 +249,30 @@ async def read_arxiv_paper(paper_id: str, save_path: str = "./downloads") -> str
 
 @mcp.tool()
 async def read_pubmed_paper(paper_id: str, save_path: str = "./downloads") -> str:
-    """Read and extract text content from a PubMed paper.
+    """
+    Attempt to read and extract text from a PubMed paper.
 
     Args:
-        paper_id: PubMed ID (PMID).
-        save_path: Directory where the PDF would be saved (unused).
+      paper_id (str): PubMed ID (PMID).
+      save_path (str): Directory path (may be unused).
+
     Returns:
-        str: Message indicating that direct paper reading is not supported.
+      message (str): Status or explanation of read support.
     """
     return pubmed_searcher.read_paper(paper_id, save_path)
 
 
 @mcp.tool()
 async def read_biorxiv_paper(paper_id: str, save_path: str = "./downloads") -> str:
-    """Read and extract text content from a bioRxiv paper PDF.
+    """
+    Read and extract text content from a bioRxiv paper PDF.
 
     Args:
-        paper_id: bioRxiv DOI.
-        save_path: Directory where the PDF is/will be saved (default: './downloads').
+      paper_id (str): bioRxiv DOI.
+      save_path (str): Directory where the PDF is or will be stored.
+
     Returns:
-        str: The extracted text content of the paper.
+      text (str): Extracted plain text content.
     """
     try:
         return biorxiv_searcher.read_paper(paper_id, save_path)
@@ -260,13 +283,15 @@ async def read_biorxiv_paper(paper_id: str, save_path: str = "./downloads") -> s
 
 @mcp.tool()
 async def read_medrxiv_paper(paper_id: str, save_path: str = "./downloads") -> str:
-    """Read and extract text content from a medRxiv paper PDF.
+    """
+    Read and extract text content from a medRxiv paper PDF.
 
     Args:
-        paper_id: medRxiv DOI.
-        save_path: Directory where the PDF is/will be saved (default: './downloads').
+      paper_id (str): medRxiv DOI.
+      save_path (str): Directory where the PDF is or will be stored.
+
     Returns:
-        str: The extracted text content of the paper.
+      text (str): Extracted plain text content.
     """
     try:
         return medrxiv_searcher.read_paper(paper_id, save_path)
@@ -277,13 +302,15 @@ async def read_medrxiv_paper(paper_id: str, save_path: str = "./downloads") -> s
 
 @mcp.tool()
 async def read_iacr_paper(paper_id: str, save_path: str = "./downloads") -> str:
-    """Read and extract text content from an IACR ePrint paper PDF.
+    """
+    Read and extract text content from an IACR ePrint paper PDF.
 
     Args:
-        paper_id: IACR paper ID (e.g., '2009/101').
-        save_path: Directory where the PDF is/will be saved (default: './downloads').
+      paper_id (str): IACR ePrint identifier.
+      save_path (str): Directory where the PDF is or will be stored.
+
     Returns:
-        str: The extracted text content of the paper.
+      text (str): Extracted plain text content.
     """
     try:
         return iacr_searcher.read_paper(paper_id, save_path)
@@ -294,14 +321,16 @@ async def read_iacr_paper(paper_id: str, save_path: str = "./downloads") -> str:
 
 @mcp.tool()
 async def search_semantic(query: str, year: Optional[str] = None, max_results: int = 10) -> List[Dict]:
-    """Search academic papers from Semantic Scholar.
+    """
+    Search academic papers from Semantic Scholar.
 
     Args:
-        query: Search query string (e.g., 'machine learning').
-        year: Optional year filter (e.g., '2019', '2016-2020', '2010-', '-2015').
-        max_results: Maximum number of papers to return (default: 10).
+      query (str): Search query text.
+      year (Optional[str]): Optional year filter expression.
+      max_results (int): Maximum number of papers to return.
+
     Returns:
-        List of paper metadata in dictionary format.
+      papers (List[Dict]): Paper metadata as dictionaries.
     """
     kwargs = {}
     if year is not None:
@@ -312,42 +341,30 @@ async def search_semantic(query: str, year: Optional[str] = None, max_results: i
 
 @mcp.tool()
 async def download_semantic(paper_id: str, save_path: str = "./downloads") -> str:
-    """Download PDF of a Semantic Scholar paper.    
+    """
+    Download the PDF of a Semantic Scholar paper.
 
     Args:
-        paper_id: Semantic Scholar paper ID, Paper identifier in one of the following formats:
-            - Semantic Scholar ID (e.g., "649def34f8be52c8b66281af98ae884c09aef38b")
-            - DOI:<doi> (e.g., "DOI:10.18653/v1/N18-3011")
-            - ARXIV:<id> (e.g., "ARXIV:2106.15928")
-            - MAG:<id> (e.g., "MAG:112218234")
-            - ACL:<id> (e.g., "ACL:W12-3903")
-            - PMID:<id> (e.g., "PMID:19872477")
-            - PMCID:<id> (e.g., "PMCID:2323736")
-            - URL:<url> (e.g., "URL:https://arxiv.org/abs/2106.15928v1")
-        save_path: Directory to save the PDF (default: './downloads').
+      paper_id (str): Semantic Scholar paper identifier or alias (ID, DOI, ARXIV, etc.).
+      save_path (str): Directory to save the PDF.
+
     Returns:
-        Path to the downloaded PDF file.
-    """ 
+      path (str): File path of the downloaded PDF.
+    """
     return semantic_searcher.download_pdf(paper_id, save_path)
 
 
 @mcp.tool()
 async def read_semantic_paper(paper_id: str, save_path: str = "./downloads") -> str:
-    """Read and extract text content from a Semantic Scholar paper. 
+    """
+    Read and extract text content from a Semantic Scholar paper.
 
     Args:
-        paper_id: Semantic Scholar paper ID, Paper identifier in one of the following formats:
-            - Semantic Scholar ID (e.g., "649def34f8be52c8b66281af98ae884c09aef38b")
-            - DOI:<doi> (e.g., "DOI:10.18653/v1/N18-3011")
-            - ARXIV:<id> (e.g., "ARXIV:2106.15928")
-            - MAG:<id> (e.g., "MAG:112218234")
-            - ACL:<id> (e.g., "ACL:W12-3903")
-            - PMID:<id> (e.g., "PMID:19872477")
-            - PMCID:<id> (e.g., "PMCID:2323736")
-            - URL:<url> (e.g., "URL:https://arxiv.org/abs/2106.15928v1")
-        save_path: Directory where the PDF is/will be saved (default: './downloads').
+      paper_id (str): Semantic Scholar paper identifier or alias (ID, DOI, ARXIV, etc.).
+      save_path (str): Directory where the PDF is or will be stored.
+
     Returns:
-        str: The extracted text content of the paper.
+      text (str): Extracted plain text content.
     """
     try:
         return semantic_searcher.read_paper(paper_id, save_path)
@@ -358,32 +375,16 @@ async def read_semantic_paper(paper_id: str, save_path: str = "./downloads") -> 
 
 @mcp.tool()
 async def search_crossref(query: str, max_results: int = 10, **kwargs) -> List[Dict]:
-    """Search academic papers from CrossRef database.
-    
-    CrossRef is a scholarly infrastructure organization that provides 
-    persistent identifiers (DOIs) for scholarly content and metadata.
-    It's one of the largest citation databases covering millions of 
-    academic papers, journals, books, and other scholarly content.
+    """
+    Search academic papers from the CrossRef database.
 
     Args:
-        query: Search query string (e.g., 'machine learning', 'climate change').
-        max_results: Maximum number of papers to return (default: 10, max: 1000).
-        **kwargs: Additional search parameters:
-            - filter: CrossRef filter string (e.g., 'has-full-text:true,from-pub-date:2020')
-            - sort: Sort field ('relevance', 'published', 'updated', 'deposited', etc.)
-            - order: Sort order ('asc' or 'desc')
+      query (str): Search query text.
+      max_results (int): Maximum number of papers to return.
+      **kwargs: Optional CrossRef filter or sort parameters.
+
     Returns:
-        List of paper metadata in dictionary format.
-        
-    Examples:
-        # Basic search
-        search_crossref("deep learning", 20)
-        
-        # Search with filters
-        search_crossref("climate change", 10, filter="from-pub-date:2020,has-full-text:true")
-        
-        # Search sorted by publication date
-        search_crossref("neural networks", 15, sort="published", order="desc")
+      papers (List[Dict]): Paper metadata as dictionaries.
     """
     papers = await async_search(crossref_searcher, query, max_results, **kwargs)
     return papers if papers else []
@@ -391,15 +392,14 @@ async def search_crossref(query: str, max_results: int = 10, **kwargs) -> List[D
 
 @mcp.tool()
 async def get_crossref_paper_by_doi(doi: str) -> Dict:
-    """Get a specific paper from CrossRef by its DOI.
+    """
+    Get a specific CrossRef record by DOI.
 
     Args:
-        doi: Digital Object Identifier (e.g., '10.1038/nature12373').
+      doi (str): Digital Object Identifier string.
+
     Returns:
-        Paper metadata in dictionary format, or empty dict if not found.
-        
-    Example:
-        get_crossref_paper_by_doi("10.1038/nature12373")
+      paper (Dict): Paper metadata dictionary or empty dict if not found.
     """
     async with httpx.AsyncClient() as client:
         paper = crossref_searcher.get_paper_by_doi(doi)
@@ -408,17 +408,15 @@ async def get_crossref_paper_by_doi(doi: str) -> Dict:
 
 @mcp.tool()
 async def download_crossref(paper_id: str, save_path: str = "./downloads") -> str:
-    """Attempt to download PDF of a CrossRef paper.
+    """
+    Attempt to download the PDF of a CrossRef-referenced paper.
 
     Args:
-        paper_id: CrossRef DOI (e.g., '10.1038/nature12373').
-        save_path: Directory to save the PDF (default: './downloads').
+      paper_id (str): CrossRef DOI.
+      save_path (str): Directory to save the PDF.
+
     Returns:
-        str: Message indicating that direct PDF download is not supported.
-        
-    Note:
-        CrossRef is a citation database and doesn't provide direct PDF downloads.
-        Use the DOI to access the paper through the publisher's website.
+      message (str): Status or explanation of download support.
     """
     try:
         return crossref_searcher.download_pdf(paper_id, save_path)
@@ -428,17 +426,15 @@ async def download_crossref(paper_id: str, save_path: str = "./downloads") -> st
 
 @mcp.tool()
 async def read_crossref_paper(paper_id: str, save_path: str = "./downloads") -> str:
-    """Attempt to read and extract text content from a CrossRef paper.
+    """
+    Attempt to read and extract text content from a CrossRef-referenced paper.
 
     Args:
-        paper_id: CrossRef DOI (e.g., '10.1038/nature12373').
-        save_path: Directory where the PDF is/will be saved (default: './downloads').
+      paper_id (str): CrossRef DOI.
+      save_path (str): Directory where the PDF is or would be stored.
+
     Returns:
-        str: Message indicating that direct paper reading is not supported.
-        
-    Note:
-        CrossRef is a citation database and doesn't provide direct paper content.
-        Use the DOI to access the paper through the publisher's website.
+      message (str): Status or explanation of read support.
     """
     return crossref_searcher.read_paper(paper_id, save_path)
 

@@ -20,22 +20,12 @@ BASE = "https://airquality.googleapis.com/v1"
 @server.tool()
 async def current_conditions(lat: float, lng: float) -> Dict[str, Any]:
     """
-    Retrieve the **current air-quality conditions** at a specific location.
-
-    Args:
+      Retrieve current air-quality conditions at a specific latitude and longitude.
+      Args:
         lat (float): Latitude of the location.
         lng (float): Longitude of the location.
-
-    Returns:
-        Dict[str, Any]: JSON response from the Google Air Quality API, typically containing:
-            - `indexes`: Universal AQI and region-specific AQI values.
-            - `pollutants`: Key pollutant metrics (PM2.5, PM10, O₃, NO₂, etc.).
-            - `healthRecommendations`: Optional health guidance strings.
-
-    Notes:
-        - Uses POST `/v1/currentConditions:lookup`.
-        - `location` must be passed as an object: {"latitude": ..., "longitude": ...}.
-        - Requires a valid GOOGLE_MAPS_API_KEY environment variable.
+      Returns:
+        data (Dict[str, Any]): JSON payload from Google Air Quality API with AQI and pollutants.
     """
     url = f"{BASE}/currentConditions:lookup"
     params = {"key": API_KEY}
@@ -50,16 +40,13 @@ async def current_conditions(lat: float, lng: float) -> Dict[str, Any]:
 @server.tool()
 async def forecast(lat: float, lng: float, hours: Optional[int] = None) -> Dict[str, Any]:
     """
-    Retrieve **air-quality forecasts** for the next several hours (up to 96 hours).
-
-    Args:
+      Retrieve air-quality forecasts for a location for a configurable number of hours.
+      Args:
         lat (float): Latitude of the forecast location.
         lng (float): Longitude of the forecast location.
         hours (Optional[int]): Number of forecast hours to request (1–96).
-            If omitted, the API’s default forecast window is used.
-
-    Returns:
-        Dict[str, Any]: JSON payload with forecasted pollutant levels and AQI indexes.
+      Returns:
+        data (Dict[str, Any]): JSON payload with forecasted pollutant levels and AQI indexes.
     """
     url = f"{BASE}/forecast:lookup"
     params = {"key": API_KEY}
@@ -76,16 +63,14 @@ async def forecast(lat: float, lng: float, hours: Optional[int] = None) -> Dict[
 @server.tool()
 async def history(lat: float, lng: float, startTime: str, endTime: str) -> Dict[str, Any]:
     """
-    Retrieve **historical air-quality records** for a given location and time range.
-
-    Args:
+      Retrieve historical air-quality records for a location over a time range.
+      Args:
         lat (float): Latitude of the query location.
         lng (float): Longitude of the query location.
-        startTime (str): Start time in ISO-8601 format (e.g., "2025-03-01T00:00:00Z").
+        startTime (str): Start time in ISO-8601 format.
         endTime (str): End time in ISO-8601 format.
-
-    Returns:
-        Dict[str, Any]: JSON containing past AQI and pollutant data for the interval.
+      Returns:
+        data (Dict[str, Any]): JSON with past AQI and pollutant data for the interval.
     """
     url = f"{BASE}/history:lookup"
     params = {"key": API_KEY}
@@ -104,17 +89,14 @@ async def history(lat: float, lng: float, startTime: str, endTime: str) -> Dict[
 @server.tool()
 async def heatmap_tile(z: int, x: int, y: int, indexType: str = "UNIVERSAL_AQI") -> Dict[str, Any]:
     """
-    Retrieve a **heat-map tile** representing air-quality levels for a given map tile coordinate.
-
-    Args:
-        z (int): Zoom level (typically 0–15).
+      Retrieve a heat-map tile representing air-quality levels for a map tile coordinate.
+      Args:
+        z (int): Zoom level of the map tile.
         x (int): Tile X coordinate.
         y (int): Tile Y coordinate.
         indexType (str): AQI index type to visualize.
-            Common options: "UNIVERSAL_AQI", "AQI_UNITS", "PM25_CONCENTRATION", "OZONE_CONCENTRATION".
-
-    Returns:
-        Dict[str, Any]: JSON containing the tile metadata or base64-encoded image data.
+      Returns:
+        data (Dict[str, Any]): JSON with tile metadata or encoded image data.
     """
     url = f"{BASE}/mapTypes/{indexType}/heatmapTiles/{z}/{x}/{y}"
     params = {"key": API_KEY}

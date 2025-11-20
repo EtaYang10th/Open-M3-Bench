@@ -38,6 +38,12 @@ except ImportError as e:
         
         @mcp.tool()
         def server_error() -> str:
+            """
+              Report that the bibliomantic server failed to initialize correctly.
+              Args:
+              Returns:
+                result (str): Error message advising to inspect logs and dependencies.
+            """
             return "Server failed to initialize properly. Please check the logs and ensure all dependencies are installed."
 
 def main():

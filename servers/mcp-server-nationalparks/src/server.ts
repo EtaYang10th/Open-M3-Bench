@@ -42,32 +42,32 @@ export function createServer() {
       tools: [
         {
           name: "findParks",
-          description: "Search for national parks based on state, name, activities, or other criteria",
+          description: "  Search for national parks using location or filter criteria.\n  Args:\n    (see schema): Use FindParksSchema fields such as state, name, and activities.\n  Returns:\n    result (text): JSON string with matching park records.",
           inputSchema: zodToJsonSchema(FindParksSchema),
         },
         {
           name: "getParkDetails",
-          description: "Get detailed information about a specific national park",
+          description: "  Get detailed information for a specific national park.\n  Args:\n    (see schema): Use GetParkDetailsSchema fields such as park code.\n  Returns:\n    result (text): JSON string describing the selected park.",
           inputSchema: zodToJsonSchema(GetParkDetailsSchema),
         },
         {
           name: "getAlerts",
-          description: "Get current alerts for national parks including closures, hazards, and important information",
+          description: "  Get current alerts for national parks.\n  Args:\n    (see schema): Use GetAlertsSchema fields such as park codes or state.\n  Returns:\n    result (text): JSON string listing active alerts.",
           inputSchema: zodToJsonSchema(GetAlertsSchema),
         },
         {
           name: "getVisitorCenters",
-          description: "Get information about visitor centers and their operating hours",
+          description: "  Get information about visitor centers and operating hours.\n  Args:\n    (see schema): Use GetVisitorCentersSchema fields such as park code or state.\n  Returns:\n    result (text): JSON string listing visitor centers.",
           inputSchema: zodToJsonSchema(GetVisitorCentersSchema),
         },
         {
           name: "getCampgrounds",
-          description: "Get information about available campgrounds and their amenities",
+          description: "  Get information about available campgrounds and amenities.\n  Args:\n    (see schema): Use GetCampgroundsSchema fields such as park code or state.\n  Returns:\n    result (text): JSON string listing campgrounds.",
           inputSchema: zodToJsonSchema(GetCampgroundsSchema),
         },
         {
           name: "getEvents",
-          description: "Find upcoming events at parks",
+          description: "  Find upcoming events at national parks.\n  Args:\n    (see schema): Use GetEventsSchema fields such as park code or date filters.\n  Returns:\n    result (text): JSON string listing events.",
           inputSchema: zodToJsonSchema(GetEventsSchema),
         },
       ],

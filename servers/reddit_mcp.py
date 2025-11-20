@@ -57,36 +57,12 @@ async def _get_access_token() -> Optional[str]:
 @server.tool()
 async def search_hot_posts(subreddit: str = "MachineLearning", limit: int = 5) -> str:
     """
-    Retrieve the hottest (trending) posts from a specific Reddit subreddit.
-
-    This tool is particularly useful for:
-    - Augmenting slides, essays, or research with trending public opinions.
-    - Auto-answering detected questions (integration with presentation MCP).
-    - Discovering real-time discussion topics.
-
-    Args:
-        subreddit (str):
-            Name of the subreddit without prefix (e.g., "technology", "AskReddit").
-        limit (int):
-            Number of posts to retrieve (default: 5, max recommended: 10).
-
-    Returns:
-        str:
-            A plain-text list of posts. Each post includes:
-                - Title
-                - Score (upvotes)
-                - Comment count
-                - Author username
-                - Link URL to the Reddit post
-            Example output:
-                - What is AGI?
-                  Score: 5421
-                  Comments: 821
-                  Author: user123
-                  Link: https://reddit.com/...
-
-    Error Handling:
-        Returns an error string if Reddit API fails or credentials are missing.
+      Retrieve hot posts from a subreddit using the Reddit API.
+      Args:
+        subreddit (str): Subreddit name without the r/ prefix.
+        limit (int): Number of posts to retrieve.
+      Returns:
+        result (str): Plain-text list of posts with title, score, comments, author, and link, or an error message.
     """
     if not all([REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET, REDDIT_REFRESH_TOKEN]):
         return "Reddit credentials not configured."
@@ -131,30 +107,13 @@ async def search_hot_posts(subreddit: str = "MachineLearning", limit: int = 5) -
 @server.tool()
 async def get_post_content(post_id: str, comment_limit: int = 10, comment_depth: int = 2) -> str:
     """
-    Retrieve a detailed Reddit post including nested comments.
-
-    Ideal for:
-    - Deep-dive Q&A generation.
-    - Extracting public argument structures or debates.
-    - Narrative content enrichment for reports or slides.
-
-    Args:
-        post_id (str):
-            Reddit post ID in base36 format (e.g., "abc123").
-        comment_limit (int):
-            Max number of top-level comments to fetch (default: 10).
-        comment_depth (int):
-            Maximum nesting level of comment threads (default: 2).
-
-    Returns:
-        str:
-            A comprehensive text block including:
-                - Title, Score, Author
-                - Body content
-                - Hierarchical comments (formatted with -- indentation)
-
-    Note:
-        Uses async/await and avoids `asyncio.run()` to support MCP concurrency.
+      Retrieve a detailed Reddit post body with a limited set of comments.
+      Args:
+        post_id (str): Reddit post ID in base36 format.
+        comment_limit (int): Maximum number of top-level comments to fetch.
+        comment_depth (int): Maximum nesting level of comment threads.
+      Returns:
+        result (str): Plain-text block with post metadata, content, and selected comments, or an error message.
     """
     if not all([REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET, REDDIT_REFRESH_TOKEN]):
         return "Reddit credentials not configured."

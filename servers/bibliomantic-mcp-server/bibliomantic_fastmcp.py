@@ -51,16 +51,11 @@ logger.info("Bibliomantic FastMCP Server initialized")
 @mcp.tool()
 def i_ching_divination(query: Optional[str] = None) -> str:
     """
-    Perform I Ching divination using traditional three-coin method.
-    
-    Generates a random hexagram with interpretation for guidance.
-    Uses cryptographically secure randomness to simulate coin tosses.
-    
-    Args:
-        query: Optional question or context for the divination
-        
-    Returns:
-        Formatted hexagram reading with interpretation
+      Perform an I Ching divination using a three-coin style method.
+      Args:
+        query (Optional[str]): Optional question or context text for the reading.
+      Returns:
+        result (str): Formatted hexagram reading with interpretation.
     """
     logger.info("Performing I Ching divination")
     
@@ -91,17 +86,11 @@ def i_ching_divination(query: Optional[str] = None) -> str:
 @mcp.tool()
 def bibliomantic_consultation(query: str) -> str:
     """
-    Perform bibliomantic consultation following Philip K. Dick's approach.
-    
-    Augments your query with I Ching wisdom, creating a bridge between
-    your specific question and ancient guidance, as described in 
-    "The Man in the High Castle".
-    
-    Args:
-        query: The question or situation requiring guidance
-        
-    Returns:
-        Complete bibliomantic consultation with hexagram wisdom
+      Perform a bibliomantic consultation that links a query with I Ching guidance.
+      Args:
+        query (str): Question or situation text requiring guidance.
+      Returns:
+        result (str): Structured consultation text with hexagram interpretation.
     """
     logger.info(f"Performing bibliomantic consultation for query: {query[:50]}...")
     
@@ -140,16 +129,11 @@ The I Ching suggests considering this wisdom in the context of your question. Th
 @mcp.tool()
 def get_hexagram_details(hexagram_number: int) -> str:
     """
-    Get detailed information about a specific I Ching hexagram.
-    
-    Provides the traditional name and interpretation for any of the
-    64 hexagrams in the I Ching (Book of Changes).
-    
-    Args:
-        hexagram_number: The hexagram number (1-64)
-        
-    Returns:
-        Detailed hexagram information and interpretation
+      Get traditional details for a specific I Ching hexagram.
+      Args:
+        hexagram_number (int): Hexagram index from 1 to 64.
+      Returns:
+        result (str): Text description with name and interpretation.
     """
     logger.info(f"Retrieving details for hexagram {hexagram_number}")
     
@@ -328,13 +312,10 @@ Please bridge the ancient oracle's wisdom with my contemporary circumstances, he
 @mcp.tool()
 def server_statistics() -> str:
     """
-    Get bibliomantic server statistics and system information.
-    
-    Provides information about the server's capabilities, the I Ching
-    database, and divination system status.
-    
-    Returns:
-        Complete server statistics and system information
+      Get bibliomantic server statistics and basic system information.
+      Args:
+      Returns:
+        result (str): Text summary of server status, capabilities, and settings.
     """
     stats = diviner.get_divination_statistics()
     

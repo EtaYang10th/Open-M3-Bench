@@ -143,16 +143,12 @@ def _geocode_us(name: str):
 @server.tool()
 def get_weather(location: str, units: Literal["us","metric"]="us") -> str:
     """
-    Get current weather for a U.S. location using Open‑Meteo, with robust ZIP/city geocoding.
-
-    Args:
-        location (str): City/state like "Piscataway, NJ" or a 5‑digit ZIP.
-        units (Literal["us","metric"]): "us" for °F/mph, "metric" for °C/km/h.
-
-    Returns:
-        str: Plain-text sentence, e.g.,
-            "Current weather in City, ST: 72°F, wind 5 mph, code 3."
-            Includes weathercode and resolves the canonical place name.
+      Get current weather for a U.S. location using Open‑Meteo with ZIP/city geocoding.
+      Args:
+        location (str): City/state name or a 5‑digit U.S. ZIP code.
+        units (Literal["us","metric"]): "us" for imperial units or "metric" for SI units.
+      Returns:
+        result (str): Plain-text sentence summarizing temperature, wind, code, and place name.
     """
     lat, lon, resolved = _geocode_us(location)
     r = _session.get(

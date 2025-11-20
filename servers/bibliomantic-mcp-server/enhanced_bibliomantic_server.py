@@ -61,8 +61,11 @@ BRIEF_DISCLAIMER = """
 @mcp.tool()
 def i_ching_divination(query: Optional[str] = None) -> str:
     """
-    Enhanced I Ching divination with traditional three-coin method and changing lines.
-    MAINTAINS EXACT BACKWARD COMPATIBILITY while providing richer content.
+      Perform an enhanced I Ching divination using a three-coin style method.
+      Args:
+        query (Optional[str]): Optional question or context text for the reading.
+      Returns:
+        result (str): Formatted hexagram reading with enhanced interpretation and disclaimer.
     """
     logger.info("Performing enhanced I Ching divination")
     
@@ -106,8 +109,11 @@ def i_ching_divination(query: Optional[str] = None) -> str:
 @mcp.tool()
 def bibliomantic_consultation(query: str) -> str:
     """
-    Enhanced bibliomantic consultation with full traditional I Ching elements.
-    DRAMATICALLY IMPROVED CONTENT while maintaining exact interface compatibility.
+      Perform an enhanced bibliomantic consultation that augments a query with I Ching wisdom.
+      Args:
+        query (str): Question or situation text requesting guidance.
+      Returns:
+        result (str): Structured consultation text with hexagram insights and ethical context.
     """
     logger.info("Performing enhanced bibliomantic consultation")
     
@@ -162,8 +168,11 @@ Consider how this ancient perspective might offer new ways of thinking about you
 @mcp.tool()
 def get_hexagram_details(hexagram_number: int) -> str:
     """
-    Enhanced hexagram details with traditional Chinese names, Unicode symbols, and rich commentary.
-    MAINTAINS BACKWARD COMPATIBILITY while dramatically improving content quality.
+      Get enhanced details for a specific I Ching hexagram including traditional elements.
+      Args:
+        hexagram_number (int): Hexagram index from 1 to 64.
+      Returns:
+        result (str): Text description combining names, interpretation, and contextual notes.
     """
     logger.info(f"Retrieving enhanced details for hexagram {hexagram_number}")
     
@@ -389,7 +398,12 @@ Important: I understand this is for philosophical reflection and pattern explora
 
 @mcp.tool()
 def server_statistics() -> str:
-    """Enhanced server statistics"""
+    """
+      Get enhanced bibliomantic server statistics and feature overview.
+      Args:
+      Returns:
+        result (str): Text summary of system status, capabilities, and ethical framework.
+    """
     stats = diviner.get_divination_statistics()
     
     enhanced_features = ""

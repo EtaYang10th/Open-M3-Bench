@@ -85,12 +85,16 @@ async def make_nasa_request(url: str, params: dict = None) -> Union[dict[str, An
 
 @mcp.tool()
 async def get_astronomy_picture_of_day(date: str = None, count: int = None, thumbs: bool = False) -> str:
-    """Get NASA's astronomy picture of the day.
-    
+    """
+    Get NASA Astronomy Picture of the Day metadata and URLs.
+
     Args:
-        date: Date of the image in YYYY-MM-DD format. If not specified, the current date is used.
-        count: If specified, returns 'count' random images. Cannot be used with 'date'.
-        thumbs: If True, returns the thumbnail URL for videos. If APOD is not a video, this parameter is ignored.
+      date (str, optional): Image date in YYYY-MM-DD format.
+      count (int, optional): Number of random images instead of a specific date.
+      thumbs (bool): Whether to include thumbnail URLs for videos.
+
+    Returns:
+      text (str): Human-readable summary of APOD entries and links.
     """
     params = {}
     
@@ -152,12 +156,15 @@ URL: {data.get('url', 'Not available')}
 
 @mcp.tool()
 async def get_asteroids_feed(start_date: str, end_date: str = None) -> str:
-    """Get a list of asteroids based on their closest approach date to Earth.
-    
+    """
+    Get near-Earth asteroid feed for a date range.
+
     Args:
-        start_date: Start date for asteroid search in YYYY-MM-DD format.
-        end_date: End date for asteroid search in YYYY-MM-DD format. 
-        The Feed date limit is only 7 Days. If not specified, 7 days after start_date is used.
+      start_date (str): Start date in YYYY-MM-DD format.
+      end_date (str, optional): End date in YYYY-MM-DD format (max 7 days after start).
+
+    Returns:
+      text (str): Summary of asteroid counts and key approach details.
     """
     params = {
         "start_date": start_date
@@ -210,10 +217,14 @@ async def get_asteroids_feed(start_date: str, end_date: str = None) -> str:
 
 @mcp.tool()
 async def get_asteroid_lookup(asteroid_id: str) -> str:
-    """Look up a specific asteroid based on its NASA JPL ID.
-    
+    """
+    Look up detailed information for a single asteroid by ID.
+
     Args:
-        asteroid_id: Asteroid ID in the NASA JPL small body (SPK-ID) system.
+      asteroid_id (str): NASA JPL small body (SPK-ID) identifier.
+
+    Returns:
+      text (str): Formatted asteroid physical and orbital properties.
     """
     url = f"{NASA_API_BASE}/neo/rest/v1/neo/{asteroid_id}"
     data = await make_nasa_request(url)
@@ -272,7 +283,15 @@ async def get_asteroid_lookup(asteroid_id: str) -> str:
 
 @mcp.tool()
 async def browse_asteroids() -> str:
-    """Browse the asteroid dataset."""
+    """
+    Browse a paged list of near-Earth asteroids.
+
+    Args:
+      None
+
+    Returns:
+      text (str): Page summary and basic details for a subset of asteroids.
+    """
     url = f"{NASA_API_BASE}/neo/rest/v1/neo/browse"
     data = await make_nasa_request(url)
     
@@ -367,61 +386,14 @@ def format_donki_results(data: list, title_prefix: str, id_key: str) -> str:
 @mcp.tool()
 async def get_coronal_mass_ejection(start_date: str = None, end_date: str = None) -> dict:
     """
-    Retrieve coronal mass ejection (CME) events from NASA DONKI CME endpoint in a compact, structured JSON form.
-
-    Endpoint:
-        GET https://api.nasa.gov/DONKI/CME
-
-    Purpose:
-        Fetches CME events (start times, source locations, analyses including speed and type) for
-        the requested window. Downstream tasks commonly filter by halo type (e.g., "Halo" / "H"),
-        correlate CME IDs with solar flare events, and decide whether to proceed to geomagnetic storm checks.
+    Retrieve coronal mass ejection (CME) events from NASA DONKI.
 
     Args:
-        start_date (str):
-            Filter events occurring on/after this date.
-            Format: "YYYY-MM-DD".
-            Default: 30 days before current date (server-side default if omitted).
-        end_date (str):
-            Filter events occurring on/before this date.
-            Format: "YYYY-MM-DD".
-            Default: current date (server-side default if omitted).
+      start_date (str, optional): Start date in YYYY-MM-DD format.
+      end_date (str, optional): End date in YYYY-MM-DD format.
 
     Returns:
-        dict: A structured JSON payload with **compact fields** (max 10 items) for easy parsing.
-
-        Schema:
-        {
-          "count": int,               # number of events returned (capped at 10)
-          "events": [
-            {
-              "id": str | None,       # activityID
-              "start_time": str | None,
-              "source_location": str | None,
-              "link": str | None,     # CCMC DONKI detail page
-              "speed": float | None,  # from first analysis if present
-              "type": str | None,     # from first analysis, e.g., "Halo", "C", "O", etc.
-              "related_events": [str] # related activityIDs (first up to 5)
-            },
-            ...
-          ]
-        }
-
-    Common Errors:
-        - 400 Bad Request: invalid date format.
-        - 429 Too Many Requests: API key rate limit exceeded.
-        - 500 Server Errors: NASA endpoint temporarily unavailable.
-        - Unexpected data shape: outages may yield non-list responses.
-
-    Usage example (MCP prompt):
-        Step 2:
-        For the same <event_date>, call:
-        {
-          "start_date": "<event_date>",
-          "end_date": "<event_date>"
-        }
-        Then filter result.events where event.type == "Halo" (or equivalent halo flag).
-        Collect event.id for later steps.
+      result (dict): Compact JSON with CME event count and basic fields.
     """
     params = {}
     if start_date: params["startDate"] = start_date
@@ -459,36 +431,14 @@ async def get_coronal_mass_ejection(start_date: str = None, end_date: str = None
 @mcp.tool()
 async def get_geomagnetic_storm(start_date: str = None, end_date: str = None) -> dict:
     """
-    Retrieve geomagnetic storm (GST) data from NASA DONKI API in a compact, structured format.
-
-    Endpoint:
-        GET https://api.nasa.gov/DONKI/GST
-
-    Purpose:
-        Fetch geomagnetic storm events and their Kp-index time series for the specified range.
-        Used after detecting Halo CME events to evaluate possible geomagnetic responses.
+    Retrieve geomagnetic storm (GST) events from NASA DONKI.
 
     Args:
-        start_date (str): Start date in YYYY-MM-DD format.
-        end_date (str): End date in YYYY-MM-DD format.
+      start_date (str, optional): Start date in YYYY-MM-DD format.
+      end_date (str, optional): End date in YYYY-MM-DD format.
 
     Returns:
-        dict: Structured JSON result with concise fields.
-
-        Example Schema:
-        {
-          "count": int,
-          "events": [
-            {
-              "id": str | None,
-              "start_time": str | None,
-              "end_time": str | None,
-              "max_kp": float | None,
-              "kp_series": [float]
-            },
-            ...
-          ]
-        }
+      result (dict): Compact JSON with GST event count and Kp index data.
     """
     params = {}
     if start_date:
@@ -542,60 +492,14 @@ async def get_geomagnetic_storm(start_date: str = None, end_date: str = None) ->
 @mcp.tool()
 async def get_solar_flare(start_date: str = None, end_date: str = None) -> dict:
     """
-    Retrieve solar flare (FLR) events from NASA DONKI FLR endpoint in a compact, structured JSON form.
-
-    Endpoint:
-        GET https://api.nasa.gov/DONKI/FLR
-
-    Purpose:
-        Fetches solar flare events (class, times, source location, and linked events) for the
-        requested date range. This tool is useful for downstream workflows that need to filter
-        flares by intensity (e.g., M5+ or any X-class), join with CME events, or extract peak times.
+    Retrieve solar flare (FLR) events from NASA DONKI.
 
     Args:
-        start_date (str):
-            Filter events occurring on/after this date.
-            Format: "YYYY-MM-DD".
-            Default: 30 days before current date (server-side default if omitted).
-        end_date (str):
-            Filter events occurring on/before this date.
-            Format: "YYYY-MM-DD".
-            Default: current date (server-side default if omitted).
+      start_date (str, optional): Start date in YYYY-MM-DD format.
+      end_date (str, optional): End date in YYYY-MM-DD format.
 
     Returns:
-        dict: A structured JSON payload with **compact fields** (max 10 items) for easy parsing.
-
-        Schema:
-        {
-          "count": int,               # number of events returned (capped at 10)
-          "events": [
-            {
-              "id": str | None,       # flare ID (flrID)
-              "begin_time": str | None,
-              "peak_time": str | None,
-              "end_time": str | None,
-              "class": str | None,    # classType, e.g., "M5.8", "X1.2"
-              "source_location": str | None,
-              "linked_events": [str]  # related activityIDs (first up to 5)
-            },
-            ...
-          ]
-        }
-
-    Common Errors:
-        - 400 Bad Request: invalid date format.
-        - 429 Too Many Requests: API key rate limit exceeded.
-        - 500 Server Errors: NASA endpoint temporarily unavailable.
-        - Unexpected data shape: the API occasionally returns non-list content on outages.
-
-    Usage example (MCP prompt):
-        Step 2:
-        For each date from Step 1 (M5+ flares), call:
-        {
-          "start_date": "<event_date>",
-          "end_date": "<event_date>"
-        }
-        Then read from result.events[*].peak_time and result.events[*].class.
+      result (dict): Compact JSON with flare event count and basic fields.
     """
     params = {}
     if start_date: params["startDate"] = start_date
@@ -629,11 +533,15 @@ async def get_solar_flare(start_date: str = None, end_date: str = None) -> dict:
 
 @mcp.tool()
 async def get_solar_energetic_particle(start_date: str = None, end_date: str = None) -> str:
-    """Get solar energetic particle (SEP) data.
-    
+    """
+    Get solar energetic particle (SEP) events from NASA DONKI.
+
     Args:
-        start_date: Start date in YYYY-MM-DD format. Defaults to 30 days before current date.
-        end_date: End date in YYYY-MM-DD format. Defaults to current date.
+      start_date (str, optional): Start date in YYYY-MM-DD format.
+      end_date (str, optional): End date in YYYY-MM-DD format.
+
+    Returns:
+      text (str): Formatted list of SEP events or a no-data message.
     """
     params = {}
     if start_date: params["startDate"] = start_date
@@ -664,11 +572,15 @@ async def get_solar_energetic_particle(start_date: str = None, end_date: str = N
 
 @mcp.tool()
 async def get_magnetopause_crossing(start_date: str = None, end_date: str = None) -> str:
-    """Get magnetopause crossing (MPC) data.
-    
+    """
+    Get magnetopause crossing (MPC) events from NASA DONKI.
+
     Args:
-        start_date: Start date in YYYY-MM-DD format. Defaults to 30 days before current date.
-        end_date: End date in YYYY-MM-DD format. Defaults to current date.
+      start_date (str, optional): Start date in YYYY-MM-DD format.
+      end_date (str, optional): End date in YYYY-MM-DD format.
+
+    Returns:
+      text (str): Formatted list of MPC events or a no-data message.
     """
     params = {}
     if start_date: params["startDate"] = start_date
@@ -699,11 +611,15 @@ async def get_magnetopause_crossing(start_date: str = None, end_date: str = None
 
 @mcp.tool()
 async def get_radiation_belt_enhancement(start_date: str = None, end_date: str = None) -> str:
-    """Get radiation belt enhancement (RBE) data.
-    
+    """
+    Get radiation belt enhancement (RBE) events from NASA DONKI.
+
     Args:
-        start_date: Start date in YYYY-MM-DD format. Defaults to 30 days before current date.
-        end_date: End date in YYYY-MM-DD format. Defaults to current date.
+      start_date (str, optional): Start date in YYYY-MM-DD format.
+      end_date (str, optional): End date in YYYY-MM-DD format.
+
+    Returns:
+      text (str): Formatted list of RBE events or a no-data message.
     """
     params = {}
     if start_date: params["startDate"] = start_date
@@ -734,11 +650,15 @@ async def get_radiation_belt_enhancement(start_date: str = None, end_date: str =
 
 @mcp.tool()
 async def get_hight_speed_stream(start_date: str = None, end_date: str = None) -> str: # Note: High* Speed Stream
-    """Get high speed stream (HSS) data.
-    
+    """
+    Get high speed stream (HSS) events from NASA DONKI.
+
     Args:
-        start_date: Start date in YYYY-MM-DD format. Defaults to 30 days before current date.
-        end_date: End date in YYYY-MM-DD format. Defaults to current date.
+      start_date (str, optional): Start date in YYYY-MM-DD format.
+      end_date (str, optional): End date in YYYY-MM-DD format.
+
+    Returns:
+      text (str): Formatted list of HSS events or a no-data message.
     """
     params = {}
     if start_date: params["startDate"] = start_date
@@ -769,11 +689,15 @@ async def get_hight_speed_stream(start_date: str = None, end_date: str = None) -
 
 @mcp.tool()
 async def get_wsa_enlil_simulation(start_date: str = None, end_date: str = None) -> str:
-    """Get WSA+Enlil simulation data.
-    
+    """
+    Get WSA+Enlil solar wind simulation summaries.
+
     Args:
-        start_date: Start date in YYYY-MM-DD format. Defaults to 7 days before current date.
-        end_date: End date in YYYY-MM-DD format. Defaults to current date.
+      start_date (str, optional): Start date in YYYY-MM-DD format.
+      end_date (str, optional): End date in YYYY-MM-DD format.
+
+    Returns:
+      text (str): Formatted list of simulations and basic impact info.
     """
     params = {}
     if start_date: params["startDate"] = start_date
@@ -1231,10 +1155,14 @@ async def get_notifications(start_date: str = None, end_date: str = None, notifi
 
 @mcp.tool()
 async def get_epic_imagery(collection: str = "natural") -> str:
-    """Get images from the EPIC (Earth Polychromatic Imaging Camera).
-    
+    """
+    Get latest EPIC (Earth Polychromatic Imaging Camera) image metadata and URLs.
+
     Args:
-        collection: Collection type. Options: natural, enhanced.
+      collection (str): EPIC collection type, such as "natural" or "enhanced".
+
+    Returns:
+      text (str): Formatted list of recent EPIC images and archive URLs.
     """
     if collection not in ["natural", "enhanced"]:
         return "Invalid collection. Available options: natural, enhanced."
@@ -1314,11 +1242,15 @@ async def get_epic_imagery(collection: str = "natural") -> str:
 
 @mcp.tool()
 async def get_epic_imagery_by_date(date: str, collection: str = "natural") -> str:
-    """Get images from the EPIC (Earth Polychromatic Imaging Camera) for a specific date.
-    
+    """
+    Get EPIC image metadata and URLs for a specific date.
+
     Args:
-        date: Date in YYYY-MM-DD format.
-        collection: Collection type. Options: natural, enhanced.
+      date (str): Target date in YYYY-MM-DD format.
+      collection (str): EPIC collection type, such as "natural" or "enhanced".
+
+    Returns:
+      text (str): Formatted list of EPIC images for that date and archive URLs.
     """
     if collection not in ["natural", "enhanced"]:
         return "Invalid collection. Available options: natural, enhanced."
@@ -1398,10 +1330,14 @@ async def get_epic_imagery_by_date(date: str, collection: str = "natural") -> st
 
 @mcp.tool()
 async def get_epic_dates(collection: str = "natural") -> str:
-    """Get available dates for EPIC images.
-    
+    """
+    Get all available dates for EPIC images in a collection.
+
     Args:
-        collection: Collection type. Options: natural, enhanced.
+      collection (str): EPIC collection type, such as "natural" or "enhanced".
+
+    Returns:
+      text (str): List of unique dates with available EPIC imagery.
     """
     if collection not in ["natural", "enhanced"]:
         return "Invalid collection. Available options: natural, enhanced."
@@ -1447,12 +1383,16 @@ async def get_epic_dates(collection: str = "natural") -> str:
 
 @mcp.tool()
 async def get_exoplanet_data(query: str = None, table: str = "exoplanets", format: str = "json") -> str:
-    """Get data from NASA's Exoplanet Archive.
-    
+    """
+    Query NASA Exoplanet Archive for exoplanet or related catalog data.
+
     Args:
-        query: Specific query to filter results using Exoplanet Archive syntax. Example: "pl_orbper > 300 and pl_rade < 2"
-        table: Table to query. Common options: exoplanets (confirmed planets), cumulative (Kepler Objects of Interest), koi (subset of cumulative), tce (Threshold Crossing Events).
-        format: Output format. Options: json, csv, xml, ipac. Default: json.
+      query (str, optional): Filter expression using Exoplanet Archive syntax.
+      table (str): Target table name, such as "exoplanets" or "cumulative".
+      format (str): Response format, e.g., "json", "csv", "xml", or "ipac".
+
+    Returns:
+      text (str): Parsed JSON summary or truncated raw text for non-JSON formats.
     """
     base_url = "https://exoplanetarchive.ipac.caltech.edu/cgi-bin/nstedAPI/nph-nstedAPI"
     
@@ -1559,15 +1499,18 @@ ROVER_CAMERAS = {
 
 @mcp.tool()
 async def get_mars_rover_photos(rover_name: str, sol: int = None, earth_date: str = None, camera: str = None, page: int = 1) -> str:
-    """Get photos from a Mars rover (Curiosity, Opportunity, Spirit).
-    Specify either sol (Martian day) or earth_date (YYYY-MM-DD), but not both.
-    
+    """
+    Get photos from a Mars rover by sol or Earth date.
+
     Args:
-        rover_name: Name of the rover (curiosity, opportunity, spirit).
-        sol: Martian sol (day number, starting from landing). Use if not using earth_date.
-        earth_date: Earth date in YYYY-MM-DD format. Use if not using sol.
-        camera: Filter by camera abbreviation (e.g., FHAZ, RHAZ, MAST, NAVCAM, PANCAM). See documentation for full list per rover.
-        page: Page number for results (25 photos per page).
+      rover_name (str): Rover name, such as "curiosity", "opportunity", or "spirit".
+      sol (int, optional): Martian sol number since landing.
+      earth_date (str, optional): Earth date in YYYY-MM-DD format.
+      camera (str, optional): Camera code filter (for example FHAZ or NAVCAM).
+      page (int): Results page index (25 photos per page).
+
+    Returns:
+      text (str): Formatted list of photo metadata and image URLs.
     """
     rover_name = rover_name.lower()
     if rover_name not in ROVER_CAMERAS:
@@ -1639,11 +1582,14 @@ async def get_mars_rover_photos(rover_name: str, sol: int = None, earth_date: st
 
 @mcp.tool()
 async def get_mars_rover_manifest(rover_name: str) -> str:
-    """Get the mission manifest for a Mars rover (Curiosity, Opportunity, Spirit).
-    Provides mission details like landing/launch dates, status, max sol/date, total photos, and photo counts per sol.
-    
+    """
+    Get mission manifest metadata for a Mars rover.
+
     Args:
-        rover_name: Name of the rover (curiosity, opportunity, spirit).
+      rover_name (str): Rover name, such as "curiosity", "opportunity", or "spirit".
+
+    Returns:
+      text (str): Summary of mission dates, status, and photo counts per sol.
     """
     rover_name = rover_name.lower()
     if rover_name not in ROVER_CAMERAS:

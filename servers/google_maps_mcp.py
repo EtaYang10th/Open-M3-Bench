@@ -101,18 +101,13 @@ async def _post_json(url: str, json_body: Dict[str, Any], headers: Optional[Dict
 @server.tool()
 async def geocode(address: str, region: Optional[str] = None, language: Optional[str] = None) -> Dict[str, Any]:
     """
-    Forward geocoding for a human-readable address using Google Geocoding API.
-
-    Args:
+      Forward geocode a human-readable address using Google Geocoding API.
+      Args:
         address (str): Free-text address to geocode.
-        region (Optional[str]): Region bias (e.g., "us").
-        language (Optional[str]): Response language code (e.g., "en").
-
-    Returns:
-        Dict[str, Any]: JSON object with keys:
-            - endpoint (str): The called URL.
-            - request (dict): Query parameters sent (including the API key).
-            - response (dict): Full Google Geocoding API JSON response.
+        region (Optional[str]): Region bias such as "us".
+        language (Optional[str]): Response language code such as "en".
+      Returns:
+        data (Dict[str, Any]): JSON with endpoint, request parameters, and API response.
     """
     url = "https://maps.googleapis.com/maps/api/geocode/json"
     params = _params_with_key({"address": address})
@@ -124,18 +119,13 @@ async def geocode(address: str, region: Optional[str] = None, language: Optional
 @server.tool()
 async def reverse_geocode(lat: float, lng: float, language: Optional[str] = None) -> Dict[str, Any]:
     """
-    Reverse geocoding for coordinates using Google Geocoding API.
-
-    Args:
-        lat (float): Latitude.
-        lng (float): Longitude.
-        language (Optional[str]): Response language code (e.g., "en").
-
-    Returns:
-        Dict[str, Any]: JSON object with keys:
-            - endpoint (str): The called URL.
-            - request (dict): Query parameters sent (including the API key).
-            - response (dict): Full Google Geocoding API JSON response.
+      Reverse geocode coordinates into addresses using Google Geocoding API.
+      Args:
+        lat (float): Latitude of the location.
+        lng (float): Longitude of the location.
+        language (Optional[str]): Response language code such as "en".
+      Returns:
+        data (Dict[str, Any]): JSON with endpoint, request parameters, and API response.
     """
     url = "https://maps.googleapis.com/maps/api/geocode/json"
     params = _params_with_key({"latlng": f"{lat},{lng}"})
@@ -170,21 +160,16 @@ async def places_text_search(query: str,
                              maxResultCount: int = 10,
                              fields: Optional[str] = None) -> Dict[str, Any]:
     """
-    Text search for places. Uses legacy Places Text Search as a pragmatic fallback.
-
-    Args:
-        query (str): Free-text place search query.
+      Search for places using a free-text query via Google Places Text Search.
+      Args:
+        query (str): Text query describing the place.
         languageCode (Optional[str]): Response language code.
-        regionCode (Optional[str]): Region bias.
-        locationBias (Optional[Dict[str, Any]]): Optional circle bias for v1 parity.
-        maxResultCount (int): Maximum results to return (trimmed client-side).
-        fields (Optional[str]): Ignored here; included for signature parity.
-
-    Returns:
-        Dict[str, Any]: JSON object with keys:
-            - endpoint (str): The called URL.
-            - request (dict): Query parameters used.
-            - response (dict): Places Text Search JSON (results may be trimmed to maxResultCount).
+        regionCode (Optional[str]): Region bias code.
+        locationBias (Optional[Dict[str, Any]]): Optional circle bias for location preference.
+        maxResultCount (int): Maximum number of results to keep client-side.
+        fields (Optional[str]): Unused field mask parameter for signature parity.
+      Returns:
+        data (Dict[str, Any]): JSON with endpoint, request parameters, and trimmed Places response.
     """
     url = "https://maps.googleapis.com/maps/api/place/textsearch/json"
     params: Dict[str, Any] = {"query": query, "key": API_KEY}
@@ -213,22 +198,16 @@ async def places_nearby_search(location: Dict[str, float],
                                regionCode: Optional[str] = None,
                                fields: Optional[str] = None) -> Dict[str, Any]:
     """
-    Nearby search for places using Places API (New) v1.
-
-    Args:
-        location (Dict[str, float]): {"latitude": float, "longitude": float}.
+      Search nearby places using Places API (New) v1.
+      Args:
+        location (Dict[str, float]): Latitude and longitude dictionary.
         radiusMeters (int): Search radius in meters.
-        includedTypes (Optional[List[str]]): Filter by place types.
+        includedTypes (Optional[List[str]]): Optional place type filters.
         languageCode (Optional[str]): Response language code.
         regionCode (Optional[str]): Region bias.
-        fields (Optional[str]): Field mask override for the response.
-
-    Returns:
-        Dict[str, Any]: JSON object with keys:
-            - endpoint (str): The called URL.
-            - headers (dict): Effective X-Goog-FieldMask sent.
-            - request (dict): JSON body used.
-            - response (dict): Places API v1 response JSON.
+        fields (Optional[str]): Optional field mask override for response.
+      Returns:
+        data (Dict[str, Any]): JSON with endpoint, field mask, request body, and API response.
     """
     url = f"{PLACES_V1}/places:searchNearby"
     body = {"location": location, "radiusMeters": int(radiusMeters)}
@@ -245,17 +224,12 @@ async def places_nearby_search(location: Dict[str, float],
 @server.tool()
 async def place_details(place_id: str, fields: Optional[str] = None) -> Dict[str, Any]:
     """
-    Fetch place details by `place_id` using Places API (New) v1.
-
-    Args:
+      Fetch place details by place ID using Places API (New) v1.
+      Args:
         place_id (str): Google Place ID.
-        fields (Optional[str]): Field mask override; defaults to common fields.
-
-    Returns:
-        Dict[str, Any]: JSON object with keys:
-            - endpoint (str): The called URL.
-            - headers (dict): Effective X-Goog-FieldMask sent.
-            - response (dict): Place details JSON.
+        fields (Optional[str]): Optional field mask override.
+      Returns:
+        data (Dict[str, Any]): JSON with endpoint, field mask, and place details response.
     """
     url = f"{PLACES_V1}/places/{place_id}"
     headers = {
@@ -274,18 +248,13 @@ async def place_photo_media(photo_resource: str,
                             maxWidthPx: Optional[int] = None,
                             maxHeightPx: Optional[int] = None) -> Dict[str, Any]:
     """
-    Download a place photo asset and return a data URL wrapper.
-
-    Args:
-        photo_resource (str): Resource path `places/{placeId}/photos/{photoRef}`.
-        maxWidthPx (Optional[int]): Maximum width constraint.
-        maxHeightPx (Optional[int]): Maximum height constraint.
-
-    Returns:
-        Dict[str, Any]: JSON object with keys:
-            - endpoint (str): The called URL.
-            - request (dict): Query parameters used.
-            - response (dict): Either JSON or {content_type, data_url} when non-JSON.
+      Download a place photo asset and return it wrapped as a data URL or JSON.
+      Args:
+        photo_resource (str): Places photo resource path.
+        maxWidthPx (Optional[int]): Optional maximum image width in pixels.
+        maxHeightPx (Optional[int]): Optional maximum image height in pixels.
+      Returns:
+        data (Dict[str, Any]): JSON with endpoint, query parameters, and photo response.
     """
     # Build path: .../media
     base = f"{PLACES_V1}/{photo_resource}/media"
@@ -317,24 +286,18 @@ async def compute_route(origin: Dict[str, Any],
                         intermediates: Optional[List[Dict[str, Any]]] = None,
                         fields: Optional[str] = None) -> Dict[str, Any]:
     """
-    Compute a route using Routes API v2.
-
-    Args:
-        origin (Dict[str, Any]): {placeId: str} or {latLng: {latitude, longitude}}.
-        destination (Dict[str, Any]): Same structure as origin.
-        travelMode (str): One of DRIVE|BICYCLE|WALK|TWO_WHEELER|TRANSIT.
-        routingPreference (Optional[str]): Routing preference.
-        avoidTolls (Optional[bool]): Avoid toll roads.
-        optimizeWaypointOrder (Optional[bool]): Optimize waypoint order.
-        intermediates (Optional[List[Dict[str, Any]]]): Waypoints.
-        fields (Optional[str]): Field mask override for response trimming.
-
-    Returns:
-        Dict[str, Any]: JSON object with keys:
-            - endpoint (str): The called URL.
-            - headers (dict): Effective X-Goog-FieldMask sent.
-            - request (dict): JSON body used.
-            - response (dict): Routes API response JSON.
+      Compute a route between origin and destination using Routes API v2.
+      Args:
+        origin (Dict[str, Any]): Origin location using placeId or latLng structure.
+        destination (Dict[str, Any]): Destination location using placeId or latLng.
+        travelMode (str): Travel mode such as DRIVE or WALK.
+        routingPreference (Optional[str]): Optional routing preference.
+        avoidTolls (Optional[bool]): Whether to avoid toll roads.
+        optimizeWaypointOrder (Optional[bool]): Whether to optimize waypoint order.
+        intermediates (Optional[List[Dict[str, Any]]]): Optional waypoints.
+        fields (Optional[str]): Optional field mask override for response.
+      Returns:
+        data (Dict[str, Any]): JSON with endpoint, field mask, request body, and route response.
     """
     body: Dict[str, Any] = {
         "origin": origin,
@@ -359,20 +322,15 @@ async def compute_route(origin: Dict[str, Any],
 @server.tool()
 async def directions_legacy(origin: str, destination: str, mode: str = "driving", waypoints: Optional[List[str]] = None, departure_time: Optional[str] = None) -> Dict[str, Any]:
     """
-    Get directions using the legacy Directions API (classic JSON format).
-
-    Args:
-        origin (str): Origin address or "lat,lng".
-        destination (str): Destination address or "lat,lng".
-        mode (str): Travel mode, e.g., "driving".
+      Get directions between two locations using the legacy Directions API.
+      Args:
+        origin (str): Origin address or "lat,lng" string.
+        destination (str): Destination address or "lat,lng" string.
+        mode (str): Travel mode string such as "driving".
         waypoints (Optional[List[str]]): Optional waypoint addresses.
-        departure_time (Optional[str]): Departure time (as accepted by API).
-
-    Returns:
-        Dict[str, Any]: JSON object with keys:
-            - endpoint (str)
-            - request (dict)
-            - response (dict): Directions API JSON response.
+        departure_time (Optional[str]): Optional departure time parameter.
+      Returns:
+        data (Dict[str, Any]): JSON with endpoint, request parameters, and directions response.
     """
     url = "https://maps.googleapis.com/maps/api/directions/json"
     params: Dict[str, Any] = {"origin": origin, "destination": destination, "mode": mode}
@@ -384,19 +342,14 @@ async def directions_legacy(origin: str, destination: str, mode: str = "driving"
 @server.tool()
 async def distance_matrix(origins: List[str], destinations: List[str], mode: str = "driving", departure_time: Optional[str] = None) -> Dict[str, Any]:
     """
-    Compute travel times/distances using the legacy Distance Matrix API.
-
-    Args:
-        origins (List[str]): List of origins (addresses or "lat,lng").
-        destinations (List[str]): List of destinations (addresses or "lat,lng").
-        mode (str): Travel mode, e.g., "driving".
-        departure_time (Optional[str]): Departure time parameter.
-
-    Returns:
-        Dict[str, Any]: JSON object with keys:
-            - endpoint (str)
-            - request (dict)
-            - response (dict): Distance Matrix API JSON response.
+      Compute travel times and distances using the legacy Distance Matrix API.
+      Args:
+        origins (List[str]): Origin addresses or "lat,lng" strings.
+        destinations (List[str]): Destination addresses or "lat,lng" strings.
+        mode (str): Travel mode such as "driving".
+        departure_time (Optional[str]): Optional departure time parameter.
+      Returns:
+        data (Dict[str, Any]): JSON with endpoint, request parameters, and matrix response.
     """
     url = "https://maps.googleapis.com/maps/api/distancematrix/json"
     params: Dict[str, Any] = {"origins": "|".join(origins), "destinations": "|".join(destinations), "mode": mode}
@@ -408,19 +361,13 @@ async def distance_matrix(origins: List[str], destinations: List[str], mode: str
 @server.tool()
 async def timezone(lat: float, lng: float, timestamp: Optional[int] = None) -> Dict[str, Any]:
     """
-    Time Zone API for a coordinate.
-
-    Args:
+      Retrieve time zone information for a coordinate using the Time Zone API.
+      Args:
         lat (float): Latitude of the location.
         lng (float): Longitude of the location.
-        timestamp (Optional[int]): Unix epoch seconds used to compute DST offsets.
-            Defaults to current time if omitted.
-
-    Returns:
-        Dict[str, Any]: JSON object with keys:
-            - endpoint (str): The called URL.
-            - request (dict): Query parameters sent (including the API key and timestamp).
-            - response (dict): Time Zone API JSON (e.g., timeZoneId, timeZoneName, dstOffset, rawOffset, status).
+        timestamp (Optional[int]): Unix epoch seconds for DST calculation.
+      Returns:
+        data (Dict[str, Any]): JSON with endpoint, request parameters, and time zone response.
     """
     if timestamp is None:
         timestamp = int(time.time())
@@ -432,16 +379,11 @@ async def timezone(lat: float, lng: float, timestamp: Optional[int] = None) -> D
 @server.tool()
 async def elevation_by_locations(locations: List[str]) -> Dict[str, Any]:
     """
-    Elevation for one or more discrete locations.
-
-    Args:
-        locations (List[str]): List like ["lat,lng", ...]. Max ~512 per request.
-
-    Returns:
-        Dict[str, Any]: JSON object with keys:
-            - endpoint (str): The called URL.
-            - request (dict): Query parameters sent.
-            - response (dict): Elevation API JSON (e.g., results[*].elevation, location, resolution).
+      Retrieve elevation for one or more discrete locations.
+      Args:
+        locations (List[str]): Coordinate strings such as "lat,lng".
+      Returns:
+        data (Dict[str, Any]): JSON with endpoint, request parameters, and elevation results.
     """
     url = "https://maps.googleapis.com/maps/api/elevation/json"
     params = _params_with_key({"locations": "|".join(locations)})
@@ -451,17 +393,12 @@ async def elevation_by_locations(locations: List[str]) -> Dict[str, Any]:
 @server.tool()
 async def elevation_along_path(path: List[str], samples: int) -> Dict[str, Any]:
     """
-    Elevation sampled along a path polyline.
-
-    Args:
-        path (List[str]): Path coordinates as ["lat,lng", ...].
-        samples (int): Total number of evenly spaced samples to return.
-
-    Returns:
-        Dict[str, Any]: JSON object with keys:
-            - endpoint (str): The called URL.
-            - request (dict): Query parameters sent.
-            - response (dict): Elevation API JSON (e.g., results[*].elevation along the path).
+      Retrieve elevation sampled along a path.
+      Args:
+        path (List[str]): Path coordinates as "lat,lng" strings.
+        samples (int): Number of evenly spaced samples to return.
+      Returns:
+        data (Dict[str, Any]): JSON with endpoint, request parameters, and elevation samples.
     """
     url = "https://maps.googleapis.com/maps/api/elevation/json"
     params = _params_with_key({"path": "|".join(path), "samples": int(samples)})
@@ -472,17 +409,12 @@ async def elevation_along_path(path: List[str], samples: int) -> Dict[str, Any]:
 @server.tool()
 async def roads_snap_to_roads(path: List[str], interpolate: bool = False) -> Dict[str, Any]:
     """
-    Snap GPS points to the road network.
-
-    Args:
-        path (List[str]): Points as ["lat,lng", ...]. Up to ~100 points typical.
-        interpolate (bool): If True, inserts additional points to better follow geometry.
-
-    Returns:
-        Dict[str, Any]: JSON object with keys:
-            - endpoint (str): The called URL.
-            - request (dict): Query parameters sent.
-            - response (dict): Roads API JSON (e.g., snappedPoints[*].location, placeId, originalIndex).
+      Snap GPS points to the road network using the Roads API.
+      Args:
+        path (List[str]): Coordinate strings such as "lat,lng".
+        interpolate (bool): Whether to add interpolated points along the road.
+      Returns:
+        data (Dict[str, Any]): JSON with endpoint, request parameters, and snapped points.
     """
     url = "https://roads.googleapis.com/v1/snapToRoads"
     params = _params_with_key({"path": "|".join(path)})
@@ -495,16 +427,11 @@ async def roads_snap_to_roads(path: List[str], interpolate: bool = False) -> Dic
 @server.tool()
 async def roads_nearest_roads(points: List[str]) -> Dict[str, Any]:
     """
-    Find the closest road segments for up to 100 points.
-
-    Args:
-        points (List[str]): Points as ["lat,lng", ...], max ~100.
-
-    Returns:
-        Dict[str, Any]: JSON object with keys:
-            - endpoint (str): The called URL.
-            - request (dict): Query parameters sent.
-            - response (dict): Roads API JSON (e.g., snappedPoints grouped by input point).
+      Find nearest road segments for input points using the Roads API.
+      Args:
+        points (List[str]): Coordinate strings such as "lat,lng".
+      Returns:
+        data (Dict[str, Any]): JSON with endpoint, request parameters, and snapped road segments.
     """
     url = "https://roads.googleapis.com/v1/nearestRoads"
     params = _params_with_key({"points": "|".join(points)})
@@ -516,18 +443,13 @@ async def roads_speed_limits(placeIds: Optional[List[str]] = None,
                              path: Optional[List[str]] = None,
                              units: str = "KPH") -> Dict[str, Any]:
     """
-    Get posted speed limits by place IDs or path.
-
-    Args:
-        placeIds (Optional[List[str]]): One or more Road Segment place IDs.
-        path (Optional[List[str]]): Alternative to placeIds; ["lat,lng", ...] path.
-        units (str): Units for speed. One of "KPH" or "MPH". Defaults to "KPH".
-
-    Returns:
-        Dict[str, Any]: JSON object with keys:
-            - endpoint (str): The called URL.
-            - request (dict): Query parameters sent.
-            - response (dict): Roads API JSON (e.g., speedLimits[*].speedLimit, units, placeId).
+      Retrieve posted speed limits along road segments by place IDs or path.
+      Args:
+        placeIds (Optional[List[str]]): One or more road segment place IDs.
+        path (Optional[List[str]]): Coordinate path strings as an alternative to placeIds.
+        units (str): Speed units "KPH" or "MPH".
+      Returns:
+        data (Dict[str, Any]): JSON with endpoint, request parameters, and speed limit results.
     """
     url = "https://roads.googleapis.com/v1/speedLimits"
     params: Dict[str, Any] = {}
@@ -543,21 +465,13 @@ async def geolocate_home(cellTowers: Optional[List[Dict[str, Any]]] = None,
                          wifiAccessPoints: Optional[List[Dict[str, Any]]] = None,
                          considerIp: bool = True) -> Dict[str, Any]:
     """
-    Geolocation API: estimate device location from radio/Wi‑Fi/IP signals.
-
-    Args:
-        cellTowers (Optional[List[Dict[str, Any]]]): Cell tower observations, each like
-            {"cellId": int, "locationAreaCode": int, "mobileCountryCode": int,
-             "mobileNetworkCode": int, "signalStrength": int, ...}.
-        wifiAccessPoints (Optional[List[Dict[str, Any]]]): Wi‑Fi AP observations, each like
-            {"macAddress": str, "signalStrength": int, "channel": int, ...}.
-        considerIp (bool): If True, allows IP-based fallback geolocation.
-
-    Returns:
-        Dict[str, Any]: JSON object with keys:
-            - endpoint (str): The called URL.
-            - request (dict): JSON body sent.
-            - response (dict): Geolocation API JSON (e.g., location.lat/lng, accuracy in meters).
+      Estimate device location from cell tower, Wi‑Fi, and IP signals using Geolocation API.
+      Args:
+        cellTowers (Optional[List[Dict[str, Any]]]): Optional list of cell tower observations.
+        wifiAccessPoints (Optional[List[Dict[str, Any]]]): Optional list of Wi‑Fi access point observations.
+        considerIp (bool): Whether to allow IP-based fallback geolocation.
+      Returns:
+        data (Dict[str, Any]): JSON with endpoint, request body, and geolocation result.
     """
     url = f"https://www.googleapis.com/geolocation/v1/geolocate?key={API_KEY}"
     body: Dict[str, Any] = {"considerIp": bool(considerIp)}
@@ -570,12 +484,10 @@ async def geolocate_home(cellTowers: Optional[List[Dict[str, Any]]] = None,
 @server.tool()
 async def ping() -> Dict[str, Any]:
     """
-    Basic health check.
-
-    Returns:
-        Dict[str, Any]: JSON object with keys:
-            - ok (bool): Always True if the server is up.
-            - services (List[str]): List of enabled capability names.
+      Perform a basic health check of the Google Maps MCP server.
+      Args:
+      Returns:
+        data (Dict[str, Any]): JSON with ok flag and list of enabled service names.
     """
     return {
         "ok": True,
@@ -595,19 +507,17 @@ async def static_map(center: Optional[str] = None,
                      scale: int = 2,
                      maptype: str = "roadmap") -> Dict[str, Any]:
     """
-    Generate a ready-to-use Static Maps image URL (no request performed here).
-
-    Args:
+      Build a ready-to-use Google Static Maps image URL without making the HTTP request.
+      Args:
         center (Optional[str]): Map center as address or "lat,lng".
-        zoom (Optional[int]): Zoom level.
-        size (str): Image size, e.g., "640x640".
-        markers (Optional[List[str]]): Repeated marker parameters.
-        path (Optional[str]): Path parameter string.
-        scale (int): Scale factor.
-        maptype (str): Map type, e.g., "roadmap".
-
-    Returns:
-        Dict[str, Any]: {"image_url": str} with the static maps URL.
+        zoom (Optional[int]): Map zoom level.
+        size (str): Image size string such as "640x640".
+        markers (Optional[List[str]]): Optional marker parameter strings.
+        path (Optional[str]): Optional path parameter string.
+        scale (int): Scale factor for higher resolution.
+        maptype (str): Map type such as "roadmap".
+      Returns:
+        data (Dict[str, Any]): Dictionary containing the generated image_url.
     """
     base = "https://maps.googleapis.com/maps/api/staticmap"
     params: Dict[str, Any] = {"size": size, "scale": scale, "maptype": maptype, "key": API_KEY}
@@ -637,17 +547,15 @@ async def street_view_image(location: str,
                             pitch: Optional[int] = None,
                             fov: Optional[int] = None) -> Dict[str, Any]:
     """
-    Generate a ready-to-use Street View Static image URL.
-
-    Args:
+      Build a ready-to-use Street View Static image URL.
+      Args:
         location (str): Address or "lat,lng" of the panorama location.
-        size (str): Image size, e.g., "640x640".
-        heading (Optional[int]): Camera heading.
-        pitch (Optional[int]): Camera pitch.
-        fov (Optional[int]): Field of view.
-
-    Returns:
-        Dict[str, Any]: {"image_url": str} with the Street View image URL.
+        size (str): Image size string such as "640x640".
+        heading (Optional[int]): Optional camera heading.
+        pitch (Optional[int]): Optional camera pitch.
+        fov (Optional[int]): Optional field of view.
+      Returns:
+        data (Dict[str, Any]): Dictionary containing the generated image_url.
     """
     base = "https://maps.googleapis.com/maps/api/streetview"
     params: Dict[str, Any] = {"location": location, "size": size, "key": API_KEY}

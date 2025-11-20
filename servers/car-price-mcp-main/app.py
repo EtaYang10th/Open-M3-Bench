@@ -1,191 +1,139 @@
 import requests
-import json
 
+API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI1NDYzYjFlMy04NGJlLTQyYWEtYTI1ZC1kMTg1YjlmNTY0MzMiLCJlbWFpbCI6Im16NzUxQHNjYXJsZXRtYWlsLnJ1dGdlcnMuZWR1IiwiaWF0IjoxNzYzMDgwMTc1fQ.7lMR72IjuQDwE_eQJ9QIqneLcglMoD2AcZlz8HPa1wo"
+
+BASE_URL = "https://api.fipe.online/api/v1"
+HEADERS = {
+    "Authorization": f"Bearer {API_KEY}",
+    "Accept": "application/json"
+}
+
+
+# ------------------------------
+# 1) Get all car brands
+# ------------------------------
 def getCarBrands() -> str:
     """
-    Get all car brands from FIPE API.
+    Get all car brands from FIPE API (via fipe.online).
     """
     try:
-        url = "https://parallelum.com.br/fipe/api/v1/carros/marcas"
-        response = requests.get(url, timeout=10)
-        
-        if response.status_code != 200:
-            return f"Error: Could not fetch car brands (Status: {response.status_code})"
-        
-        brands = response.json()
-        
+        url = f"{BASE_URL}/carros/marcas"
+        resp = requests.get(url, headers=HEADERS, timeout=10)
+
+        if resp.status_code != 200:
+            return f"Error: Could not fetch car brands (Status: {resp.status_code})"
+
+        brands = resp.json()
         if not brands:
             return "No car brands found"
-        
-        # Format brands information
-        brands_info = "🚗 **Car Brands Available** 🚗\n\n"
-        
-        # Group brands by first letter for better organization
-        brands_by_letter = {}
-        for brand in brands:
-            first_letter = brand['nome'][0].upper()
-            if first_letter not in brands_by_letter:
-                brands_by_letter[first_letter] = []
-            brands_by_letter[first_letter].append(brand)
-        
-        # Show first 20 brands
-        count = 0
-        for letter in sorted(brands_by_letter.keys()):
-            if count >= 20:
-                break
-            brands_info += f"**{letter}:**\n"
-            for brand in brands_by_letter[letter][:5]:  # Max 5 per letter
-                if count >= 20:
-                    break
-                brands_info += f"  • {brand['nome']} (Code: {brand['codigo']})\n"
-                count += 1
-            brands_info += "\n"
-        
-        brands_info += f"*Total: {len(brands)} brands available*\n"
-        brands_info += "*Use searchCarPrice with brand name to get models and prices*"
-        
-        return brands_info
-        
-    except Exception as e:
-        return f"Error fetching car brands: {str(e)}"
 
-def searchCarPrice(query: str) -> str:
+        formatted = "Car Brands Available\n\n"
+        for b in brands[:20]:
+            formatted += f"- {b['nome']} (Code: {b['codigo']})\n"
+
+        formatted += f"\nTotal brands: {len(brands)}"
+        return formatted
+
+    except Exception as e:
+        return f"Error: {e}"
+
+
+# ------------------------------
+# 2) Brand + Model family search
+# ------------------------------
+def searchBrandModelPrice(brand_name: str, model_keyword: str) -> str:
     """
-    Search for car price by brand and model name.
+    Search all models under a brand whose names contain model_keyword.
+    Return ALL matched models with latest prices.
     """
     try:
-        # First get all brands
-        brands_url = "https://parallelum.com.br/fipe/api/v1/carros/marcas"
-        response = requests.get(brands_url, timeout=10)
-        
-        if response.status_code != 200:
-            return f"Error: Could not fetch brands (Status: {response.status_code})"
-        
-        brands = response.json()
-        
-        # Search for brand by name (case insensitive)
-        query_lower = query.lower()
-        found_brand = None
-        
-        for brand in brands:
-            if query_lower in brand['nome'].lower():
-                found_brand = brand
-                break
-        
-        if not found_brand:
-            # If no brand found, show available brands
-            brand_names = [brand['nome'] for brand in brands[:10]]
-            return f"Brand '{query}' not found. Available brands include: {', '.join(brand_names)}..."
-        
-        # Get models for the found brand
-        models_url = f"https://parallelum.com.br/fipe/api/v1/carros/marcas/{found_brand['codigo']}/modelos"
-        response = requests.get(models_url, timeout=10)
-        
-        if response.status_code != 200:
-            return f"Error: Could not fetch models for {found_brand['nome']} (Status: {response.status_code})"
-        
-        models_data = response.json()
-        models = models_data.get("modelos", [])
-        
-        if not models:
-            return f"No models found for {found_brand['nome']}"
-        
-        # Get price for first 3 models
-        car_info = f"🚗 **{found_brand['nome']} Models & Prices** 🚗\n\n"
-        
-        for i, model in enumerate(models[:3]):  # Show first 3 models
-            try:
-                # Get years for this model
-                years_url = f"https://parallelum.com.br/fipe/api/v1/carros/marcas/{found_brand['codigo']}/modelos/{model['codigo']}/anos"
-                years_response = requests.get(years_url, timeout=10)
-                
-                if years_response.status_code == 200:
-                    years = years_response.json()
-                    if years:
-                        # Get price for most recent year
-                        latest_year = years[0]
-                        price_url = f"https://parallelum.com.br/fipe/api/v1/carros/marcas/{found_brand['codigo']}/modelos/{model['codigo']}/anos/{latest_year['codigo']}"
-                        price_response = requests.get(price_url, timeout=10)
-                        
-                        if price_response.status_code == 200:
-                            price_data = price_response.json()
-                            
-                            car_info += f"**{i+1}. {model['nome']}**\n"
-                            car_info += f"📅 **Year:** {price_data.get('AnoModelo', 'N/A')}\n"
-                            car_info += f"⛽ **Fuel:** {price_data.get('Combustivel', 'N/A')}\n"
-                            car_info += f"💰 **Price:** {price_data.get('Valor', 'N/A')}\n"
-                            car_info += f"📊 **Reference:** {price_data.get('MesReferencia', 'N/A')}\n"
-                            car_info += f"🔢 **FIPE Code:** {price_data.get('CodigoFipe', 'N/A')}\n\n"
-                        else:
-                            car_info += f"**{i+1}. {model['nome']}** - Price not available\n\n"
-                    else:
-                        car_info += f"**{i+1}. {model['nome']}** - No years available\n\n"
-                else:
-                    car_info += f"**{i+1}. {model['nome']}** - Years not available\n\n"
-                    
-            except Exception as model_error:
-                car_info += f"**{i+1}. {model['nome']}** - Error: {str(model_error)}\n\n"
-        
-        if len(models) > 3:
-            car_info += f"*...and {len(models)-3} more models available*\n"
-        
-        car_info += f"\n**Total Models:** {len(models)}\n"
-        car_info += "*Prices are from FIPE (Brazilian vehicle price reference)*"
-        
-        return car_info
-        
-    except Exception as e:
-        return f"Error searching for '{query}': {str(e)}"
+        # Step 1: get all brands
+        url = f"{BASE_URL}/carros/marcas"
+        resp = requests.get(url, headers=HEADERS, timeout=10)
+        if resp.status_code != 200:
+            return f"Error: could not fetch brands (status {resp.status_code})"
 
-def getCarsByType(vehicle_type: str) -> str:
-    """
-    Get vehicles by type (carros, motos, caminhoes).
-    """
-    try:
-        # Map vehicle types
-        type_mapping = {
-            'car': 'carros',
-            'cars': 'carros',
-            'carro': 'carros',
-            'carros': 'carros',
-            'motorcycle': 'motos',
-            'motorcycles': 'motos',
-            'moto': 'motos',
-            'motos': 'motos',
-            'truck': 'caminhoes',
-            'trucks': 'caminhoes',
-            'caminhao': 'caminhoes',
-            'caminhoes': 'caminhoes'
-        }
-        
-        api_type = type_mapping.get(vehicle_type.lower(), 'carros')
-        
-        url = f"https://parallelum.com.br/fipe/api/v1/{api_type}/marcas"
-        response = requests.get(url, timeout=10)
-        
-        if response.status_code != 200:
-            return f"Error: Could not fetch {vehicle_type} brands (Status: {response.status_code})"
-        
-        brands = response.json()
-        
-        if not brands:
-            return f"No {vehicle_type} brands found"
-        
-        # Format vehicle type info
-        type_emoji = "🚗" if api_type == "carros" else "🏍️" if api_type == "motos" else "🚛"
-        vehicles_info = f"{type_emoji} **{vehicle_type.title()} Brands** {type_emoji}\n\n"
-        
-        # Show first 15 brands
-        for i, brand in enumerate(brands[:15], 1):
-            vehicles_info += f"**{i}. {brand['nome']}** (Code: {brand['codigo']})\n"
-        
-        if len(brands) > 15:
-            vehicles_info += f"\n*...and {len(brands)-15} more brands*\n"
-        
-        vehicles_info += f"\n**Total Brands:** {len(brands)}\n"
-        vehicles_info += f"*Use searchCarPrice with brand name to get specific models and prices*"
-        
-        return vehicles_info
-        
+        brands = resp.json()
+
+        # Step 2: find brand
+        brand_lower = brand_name.lower()
+        target_brand = None
+        for b in brands:
+            if brand_lower in b["nome"].lower():
+                target_brand = b
+                break
+
+        if not target_brand:
+            return f"Brand '{brand_name}' not found."
+
+        brand_code = target_brand["codigo"]
+
+        # Step 3: get all models under this brand
+        url = f"{BASE_URL}/carros/marcas/{brand_code}/modelos"
+        resp = requests.get(url, headers=HEADERS, timeout=10)
+        modelos = resp.json().get("modelos", [])
+        if not modelos:
+            return f"No models found for brand '{target_brand['nome']}'."
+
+        # Step 4: fuzzy match ALL models
+        model_kw = model_keyword.lower()
+        matched = [m for m in modelos if model_kw in m["nome"].lower()]
+
+        if not matched:
+            suggestions = [m["nome"] for m in modelos[:10]]
+            return (
+                f"No models matching '{model_keyword}' under brand '{target_brand['nome']}'.\n"
+                f"Examples: {suggestions}"
+            )
+
+        # Step 5: fetch latest price for EACH matched model
+        result = f"Matched Models for {target_brand['nome']} — '{model_keyword}'\n\n"
+
+        for idx, chosen in enumerate(matched, start=1):
+            model_code = chosen["codigo"]
+
+            # fetch years
+            url = f"{BASE_URL}/carros/marcas/{brand_code}/modelos/{model_code}/anos"
+            resp = requests.get(url, headers=HEADERS, timeout=10)
+            anos = resp.json()
+
+            if not anos:
+                result += f"{idx}. {chosen['nome']} — No year data.\n\n"
+                continue
+
+            latest_year = anos[0]["codigo"]
+
+            # fetch price
+            price_url = f"{BASE_URL}/carros/marcas/{brand_code}/modelos/{model_code}/anos/{latest_year}"
+            resp = requests.get(price_url, headers=HEADERS, timeout=10)
+            if resp.status_code != 200:
+                result += f"{idx}. {chosen['nome']} — Price unavailable.\n\n"
+                continue
+
+            price = resp.json()
+
+            # append formatted result
+            result += (
+                f"{idx}. {chosen['nome']}\n"
+                f"   Year: {price.get('AnoModelo')}\n"
+                f"   Fuel: {price.get('Combustivel')}\n"
+                f"   Price: {price.get('Valor')}\n"
+                f"   FIPE Code: {price.get('CodigoFipe')}\n"
+                f"   Reference: {price.get('MesReferencia')}\n\n"
+            )
+
+        return result
+
     except Exception as e:
-        return f"Error fetching {vehicle_type} brands: {str(e)}"
+        return f"Error: {e}"
+
+
+# =======================================================
+# Local test (optional)
+# =======================================================
+if __name__ == "__main__":
+    print("=== Brand List ===")
+    print(getCarBrands())
+
+    print("\n=== Example: Brand + Model ===")
+    print(searchBrandModelPrice("Toyota", "Corolla Cross"))

@@ -83,7 +83,7 @@ class OKXServer {
       tools: [
         {
           name: 'get_price',
-          description: 'Get latest price for an OKX instrument',
+          description: "  Get the latest price for an OKX trading instrument.\n  Args:\n    instrument (string): Instrument ID such as BTC-USDT.\n  Returns:\n    result (text): JSON string with current price and basic ticker fields.",
           inputSchema: {
             type: 'object',
             properties: {
@@ -97,7 +97,7 @@ class OKXServer {
         },
         {
           name: 'get_candlesticks',
-          description: 'Get candlestick data for an OKX instrument',
+          description: "  Get recent candlestick data for an OKX trading instrument.\n  Args:\n    instrument (string): Instrument ID such as BTC-USDT.\n    bar (string): Candlestick interval like 1m or 1H.\n    limit (number): Number of candlesticks to return.\n  Returns:\n    result (text): JSON string with an array of candlestick records.",
           inputSchema: {
             type: 'object',
             properties: {

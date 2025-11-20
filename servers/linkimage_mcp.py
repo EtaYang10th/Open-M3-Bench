@@ -80,24 +80,11 @@ def download_unsplash_image(photo_url: str) -> dict:
 @server.tool()
 def fetch_unsplash_image(url: str) -> str:
     """
-    Retrieve and download the main image from an Unsplash photo page via the official API.
-
-    Input:
-        url (str): The full Unsplash photo URL, e.g.
-            "https://unsplash.com/photos/people-near-building-_K2uemedTGo"
-
-    Output (JSON):
-        {
-            "message": "Downloaded 'Nick Fewings' photo successfully.",
-            "author": "Nick Fewings",
-            "image_url": "https://images.unsplash.com/photo-1567883251222-651d554b880c?...",
-            "saved_path": "/absolute/path/images/_K2uemedTGo.jpg"
-        }
-
-    Notes:
-        - This tool uses the Unsplash REST API and is not affected by
-          website anti-scraping protections.
-        - Requires a valid ACCESS_KEY obtained from https://unsplash.com/developers.
+      Download the main image from an Unsplash photo page using the official API.
+      Args:
+        url (str): Full Unsplash photo URL for the target image.
+      Returns:
+        result (str): JSON string describing download status, image URL, author, and saved path.
     """
     result = download_unsplash_image(url)
     return json.dumps(result, ensure_ascii=False)

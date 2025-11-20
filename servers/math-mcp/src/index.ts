@@ -20,10 +20,10 @@ export default function createServer() {
     })
 
     /**
- * Addition operation
- * Adds two numbers and returns their sum
- */
-    mathServer.tool("add", "Adds two numbers together", {
+     * Addition operation
+     * Adds two numbers and returns their sum
+     */
+    mathServer.tool("add", "  Add two numbers.\n  Args:\n    firstNumber (number): First addend.\n    secondNumber (number): Second addend.\n  Returns:\n    result (text): Stringified sum of the inputs.", {
         firstNumber: z.number().describe("The first addend"),
         secondNumber: z.number().describe("The second addend")
     }, async ({ firstNumber, secondNumber }) => {
@@ -41,7 +41,7 @@ export default function createServer() {
      * Subtraction operation
      * Subtracts the second number from the first number
      */
-    mathServer.tool("subtract", "Subtracts the second number from the first number", {
+    mathServer.tool("subtract", "  Subtract one number from another.\n  Args:\n    minuend (number): Number to subtract from.\n    subtrahend (number): Number to subtract.\n  Returns:\n    result (text): Stringified difference minuend - subtrahend.", {
         minuend: z.number().describe("The number to subtract from (minuend)"),
         subtrahend: z.number().describe("The number being subtracted (subtrahend)")
     }, async ({ minuend, subtrahend }) => {
@@ -59,7 +59,7 @@ export default function createServer() {
      * Multiplication operation
      * Multiplies two numbers together
      */
-    mathServer.tool("multiply", "Multiplies two numbers together", {
+    mathServer.tool("multiply", "  Multiply two numbers.\n  Args:\n    firstNumber (number): First factor.\n    SecondNumber (number): Second factor.\n  Returns:\n    result (text): Stringified product of the inputs.", {
         firstNumber: z.number().describe("The first number"),
         SecondNumber: z.number().describe("The second number")
     }, async ({ firstNumber, SecondNumber }) => {
@@ -77,7 +77,7 @@ export default function createServer() {
      * Division operation
      * Divides the first number by the second number
      */
-    mathServer.tool("division", "Divides the first number by the second number", {
+    mathServer.tool("division", "  Divide one number by another.\n  Args:\n    numerator (number): Dividend value.\n    denominator (number): Non-zero divisor value.\n  Returns:\n    result (text): Stringified quotient numerator / denominator.", {
         numerator: z.number().describe("The number being divided (numerator)"),
         denominator: z.number().describe("The number to divide by (denominator)")
     }, async ({ numerator, denominator }) => {
@@ -95,7 +95,7 @@ export default function createServer() {
      * Sum operation
      * Calculates the sum of an array of numbers
      */
-    mathServer.tool("sum", "Adds any number of numbers together", {
+    mathServer.tool("sum", "  Sum an array of numbers.\n  Args:\n    numbers (number[]): List of numbers to add.\n  Returns:\n    result (text): Stringified sum of all inputs.", {
         numbers: z.array(z.number()).min(1).describe("Array of numbers to sum")
     }, async ({ numbers }) => {
         const value = Arithmetic.sum(numbers)
@@ -111,7 +111,7 @@ export default function createServer() {
      * Modulo operation
      * Finds the remainder of a division
      */
-    mathServer.tool("modulo", "Divides two numbers and returns the remainder", {
+    mathServer.tool("modulo", "  Compute the remainder of integer division.\n  Args:\n    numerator (number): Dividend value.\n    denominator (number): Divisor value.\n  Returns:\n    result (text): Stringified remainder of numerator % denominator.", {
         numerator: z.number().describe("The number being divided (numerator)"),
         denominator: z.number().describe("The number to divide by (denominator)")
     }, async ({ numerator, denominator }) => {
@@ -128,7 +128,7 @@ export default function createServer() {
      * Mean operation
      * Calculates the arithmetic mean of an array of numbers
      */
-    mathServer.tool("mean", "Calculates the arithmetic mean of a list of numbers", {
+    mathServer.tool("mean", "  Calculate the arithmetic mean of numbers.\n  Args:\n    numbers (number[]): List of numeric values.\n  Returns:\n    result (text): Stringified mean value.", {
         numbers: z.array(z.number()).min(1).describe("Array of numbers to find the mean of")
     }, async ({ numbers }) => {
         const value = Statistics.mean(numbers)
@@ -145,7 +145,7 @@ export default function createServer() {
      * Median operation
      * Calculates the median of an array of numbers
      */
-    mathServer.tool("median", "Calculates the median of a list of numbers", {
+    mathServer.tool("median", "  Calculate the median of numeric values.\n  Args:\n    numbers (number[]): List of numeric values.\n  Returns:\n    result (text): Stringified median value.", {
         numbers: z.array(z.number()).min(1).describe("Array of numbers to find the median of")
     }, async ({ numbers }) => {
         const value = Statistics.median(numbers)
@@ -162,7 +162,7 @@ export default function createServer() {
      * Mode operation
      * Finds the most common number in an array of numbers
      */
-    mathServer.tool("mode", "Finds the most common number in a list of numbers", {
+    mathServer.tool("mode", "  Find the most frequent values in a numeric list.\n  Args:\n    numbers (number[]): List of numeric values.\n  Returns:\n    result (text): Text summary of mode values and their frequency.", {
         numbers: z.array(z.number()).describe("Array of numbers to find the mode of")
     }, async ({ numbers }) => {
         const value = Statistics.mode(numbers)
@@ -179,7 +179,7 @@ export default function createServer() {
      * Minimum operation
      * Finds the smallest number in an array
      */
-    mathServer.tool("min", "Finds the minimum value from a list of numbers", {
+    mathServer.tool("min", "  Find the minimum value in a numeric list.\n  Args:\n    numbers (number[]): List of numeric values.\n  Returns:\n    result (text): Stringified minimum value.", {
         numbers: z.array(z.number()).describe("Array of numbers to find the minimum of")
     }, async ({ numbers }) => {
         const value = Statistics.min(numbers)
@@ -196,7 +196,7 @@ export default function createServer() {
      * Maximum operation
      * Finds the largest number in an array
      */
-    mathServer.tool("max", "Finds the maximum value from a list of numbers", {
+    mathServer.tool("max", "  Find the maximum value in a numeric list.\n  Args:\n    numbers (number[]): List of numeric values.\n  Returns:\n    result (text): Stringified maximum value.", {
         numbers: z.array(z.number()).describe("Array of numbers to find the maximum of")
     }, async ({ numbers }) => {
         const value = Statistics.max(numbers)
@@ -213,7 +213,7 @@ export default function createServer() {
      * Floor operation
      * Rounds a number down to the nearest integer
      */
-    mathServer.tool("floor", "Rounds a number down to the nearest integer", {
+    mathServer.tool("floor", "  Round a number down to the nearest integer.\n  Args:\n    number (number): Input numeric value.\n  Returns:\n    result (text): Stringified floored integer.", {
         number: z.number().describe("The number to round down"),
     }, async ({ number }) => {
         const value = Arithmetic.floor(number)
@@ -230,7 +230,7 @@ export default function createServer() {
      * Ceiling operation
      * Rounds a number up to the nearest integer
      */
-    mathServer.tool("ceiling", "Rounds a number up to the nearest integer", {
+    mathServer.tool("ceiling", "  Round a number up to the nearest integer.\n  Args:\n    number (number): Input numeric value.\n  Returns:\n    result (text): Stringified ceiled integer.", {
         number: z.number().describe("The number to round up"),
     }, async ({ number }) => {
         const value = Arithmetic.ceil(number)
@@ -247,7 +247,7 @@ export default function createServer() {
      * Round operation
      * Rounds a number to the nearest integer
      */
-    mathServer.tool("round", "Rounds a number to the nearest integer", {
+    mathServer.tool("round", "  Round a number to the nearest integer.\n  Args:\n    number (number): Input numeric value.\n  Returns:\n    result (text): Stringified rounded integer.", {
         number: z.number().describe("The number to round"),
     }, async ({ number }) => {
         const value = Arithmetic.round(number)
@@ -263,7 +263,7 @@ export default function createServer() {
      * Sin operation
      * Calculates the sine of a number in radians
      */
-    mathServer.tool("sin", "Calculates the sine of a number in radians", {
+    mathServer.tool("sin", "  Calculate the sine of a radian value.\n  Args:\n    number (number): Input in radians.\n  Returns:\n    result (text): Stringified sine value.", {
         number: z.number().describe("The number in radians to find the sine of")
     }, async ({ number }) => {
         const value = Trigonometric.sin(number)
@@ -279,7 +279,7 @@ export default function createServer() {
      * Arcsin operation
      * Calculates the arcsine of a number in radians
      */
-    mathServer.tool("arcsin", "Calculates the arcsine of a number in radians", {
+    mathServer.tool("arcsin", "  Calculate the arcsine of a value.\n  Args:\n    number (number): Input numeric value.\n  Returns:\n    result (text): Stringified arcsine in radians.", {
         number: z.number().describe("The number to find the arcsine of")
     }, async ({ number }) => {
         const value = Trigonometric.arcsin(number)
@@ -295,7 +295,7 @@ export default function createServer() {
      * Cos operation
      * Calculates the cosine of a number in radians
      */
-    mathServer.tool("cos", "Calculates the cosine of a number in radians", {
+    mathServer.tool("cos", "  Calculate the cosine of a radian value.\n  Args:\n    number (number): Input in radians.\n  Returns:\n    result (text): Stringified cosine value.", {
         number: z.number().describe("The number in radians to find the cosine of")
     }, async ({ number }) => {
         const value = Trigonometric.cos(number)
@@ -311,7 +311,7 @@ export default function createServer() {
      * Arccos operation
      * Calculates the arccosine of a number in radians
      */
-    mathServer.tool("arccos", "Calculates the arccosine of a number in radians", {
+    mathServer.tool("arccos", "  Calculate the arccosine of a value.\n  Args:\n    number (number): Input numeric value.\n  Returns:\n    result (text): Stringified arccosine in radians.", {
         number: z.number().describe("The number to find the arccosine of")
     }, async ({ number }) => {
         const value = Trigonometric.arccos(number)
@@ -327,7 +327,7 @@ export default function createServer() {
      * Tan operation
      * Calculates the tangent of a number in radians
      */
-    mathServer.tool("tan", "Calculates the tangent of a number in radians", {
+    mathServer.tool("tan", "  Calculate the tangent of a radian value.\n  Args:\n    number (number): Input in radians.\n  Returns:\n    result (text): Stringified tangent value.", {
         number: z.number().describe("The number in radians to find the tangent of")
     }, async ({ number }) => {
         const value = Trigonometric.tan(number)
@@ -343,7 +343,7 @@ export default function createServer() {
      * Arctan operation
      * Calculates the arctangent of a number in radians
      */
-    mathServer.tool("arctan", "Calculates the arctangent of a number in radians", {
+    mathServer.tool("arctan", "  Calculate the arctangent of a value.\n  Args:\n    number (number): Input numeric value.\n  Returns:\n    result (text): Stringified arctangent in radians.", {
         number: z.number().describe("The number to find the arctangent of")
     }, async ({ number }) => {
         const value = Trigonometric.arctan(number)
@@ -359,7 +359,7 @@ export default function createServer() {
      * Radians to Degrees operation
      * Converts a radian value to its equivalent in degrees
      */
-    mathServer.tool("radiansToDegrees", "Converts a radian value to its equivalent in degrees", {
+    mathServer.tool("radiansToDegrees", "  Convert a radian value to degrees.\n  Args:\n    number (number): Input in radians.\n  Returns:\n    result (text): Stringified degree value.", {
         number: z.number().describe("The number in radians to convert to degrees")
     }, async ({ number }) => {
         const value = Trigonometric.radiansToDegrees(number)
@@ -375,7 +375,7 @@ export default function createServer() {
      * Degrees to Radians operation
      * Converts a degree value to its equivalent in radians
      */
-    mathServer.tool("degreesToRadians", "Converts a degree value to its equivalent in radians", {
+    mathServer.tool("degreesToRadians", "  Convert a degree value to radians.\n  Args:\n    number (number): Input in degrees.\n  Returns:\n    result (text): Stringified radian value.", {
         number: z.number().describe("The number in degrees to convert to radians")
     }, async ({ number }) => {
         const value = Trigonometric.degreesToRadians(number)

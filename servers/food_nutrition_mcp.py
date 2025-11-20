@@ -23,14 +23,12 @@ def get_nutrition(
     food: Optional[str] = None,
 ) -> str:
     """
-    Enter a food description (e.g., '2 slices of bread' or '1 cup of rice') and get full nutritional information.
-
-    Args:
-        query (Optional[str]): Food name + quantity, e.g., "1 apple".
-        food (Optional[str]): Alias for query.
-
-    Returns:
-        str: Key nutrients and their units. Returns an error message if retrieval fails.
+      Get nutritional information for a described food item using Edamam APIs.
+      Args:
+        query (Optional[str]): Food name with quantity description.
+        food (Optional[str]): Alias for query when provided instead.
+      Returns:
+        result (str): Summary of key nutrients and units or an error message.
     """
     if not EDAMAM_APP_ID or not EDAMAM_APP_KEY:
         return "Edamam API credentials not configured."

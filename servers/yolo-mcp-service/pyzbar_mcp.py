@@ -55,22 +55,11 @@ def _sanitize_output(obj: dict) -> dict:
 @server.tool()
 def scan_barcode(image_paths: list[str] | str) -> str:
     """
-    Scan barcodes and QR codes in an image, returning decoded values and bounding boxes.
-
-    Args:
-        image_paths (list[str] | str): Path to an image file, or a list where the first
-            path will be used.
-
-    Returns:
-        str: JSON string. On success contains:
-            - message (str): Human-readable summary of what was detected.
-            - metadata.results (list[dict]): For each code:
-                - type (str): Symbology (e.g., "EAN13", "QRCODE").
-                - data (str): Decoded text.
-                - rect (dict): Bounding box with keys {x, y, width, height}.
-                - isbn (str, optional): Present for ISBN/EAN13 barcodes when applicable.
-            On error or no detections, returns a JSON string with
-            - metadata.error (str) or an empty metadata.results plus message.
+      Scan barcodes and QR codes in an image and return decoded values with bounding boxes.
+      Args:
+        image_paths (list[str] | str): Single image path or list where the first path is used.
+      Returns:
+        result (str): JSON string summarizing detections, metadata results, or error information.
     """
     try:
         # Accept image_paths as either str or list

@@ -58,7 +58,7 @@ server.setRequestHandler(ListToolsRequestSchema, async (request) => {
     tools: [
       {
         name: "fda_drug_lookup",
-        description: "Lookup FDA drug information.\n  \n  Args:\n  - drug_name (string): Required.\n  - search_type (string): One of 'general'|'label'|'adverse_events'. Default 'general'.\n  \n  Returns:\n  - { status, drug_name, search_type, total_results, drugs[] }\n  - drugs[] items: { product_number, generic_name, brand_name, labeler_name, product_type, route[], marketing_status }\n  - For 'label'/'adverse_events': may include { indications[], dosage[], warnings[], contraindications[], adverse_reactions[], drug_interactions[], pregnancy[], boxed_warning[] }.\n  \n  Errors:\n  - { status: 'error', error_message }",
+        description: "  Look up FDA drug information by name.\n  Args:\n    drug_name (string): Drug name to search.\n    search_type (string): Information type: general, label, or adverse_events.\n  Returns:\n    result (object): JSON object with status, search parameters, and drug records.",
         inputSchema: {
           type: "object",
           properties: {
@@ -78,7 +78,7 @@ server.setRequestHandler(ListToolsRequestSchema, async (request) => {
       },
       {
         name: "pubmed_search",
-        description: "Search PubMed literature.\n  \n  Args:\n  - query (string): Required.\n  - max_results (number): 1–100, default 5.\n  - date_range (string): Years window (e.g., '5').\n  - open_access (boolean): Filter open access, default false.\n  \n  Returns:\n  - { status, query, total_results, date_range, open_access, articles[] }\n  - articles[] items: { id, title, authors[], journal, publication_date, abstract_url, doi? }.\n  \n  Errors:\n  - { status: 'error', error_message }",
+        description: "  Search medical literature in PubMed.\n  Args:\n    query (string): Search query text.\n    max_results (number): Maximum number of results to return.\n    date_range (string): Optional year-window filter.\n    open_access (boolean): Whether to filter for open access only.\n  Returns:\n    result (object): JSON object with status, query parameters, and article records.",
         inputSchema: {
           type: "object",
           properties: {
@@ -109,7 +109,7 @@ server.setRequestHandler(ListToolsRequestSchema, async (request) => {
       },
       {
         name: "medrxiv_search",
-        description: "Search medRxiv preprints.\n  \n  Args:\n  - query (string): Required.\n  - max_results (number): 1–100, default 10.\n  \n  Returns:\n  - { status, query, total_results, articles[] }\n  - articles[] items: { title, authors, doi, abstract_url, publication_date }.\n  \n  Errors:\n  - { status: 'error', error_message }",
+        description: "  Search preprint articles on medRxiv.\n  Args:\n    query (string): Search query text.\n    max_results (number): Maximum number of results to return.\n  Returns:\n    result (object): JSON object with status, query parameters, and article records.",
         inputSchema: {
           type: "object",
           properties: {
@@ -130,7 +130,7 @@ server.setRequestHandler(ListToolsRequestSchema, async (request) => {
       },
       {
         name: "calculate_bmi",
-        description: "Calculate Body Mass Index (BMI).\n  \n  Args:\n  - height_meters (number): Required.\n  - weight_kg (number): Required.\n  \n  Returns:\n  - { status, bmi } where bmi is a string rounded to 2 decimals.\n  \n  Errors:\n  - { status: 'error', error_message }",
+        description: "  Calculate Body Mass Index (BMI).\n  Args:\n    height_meters (number): Height in meters.\n    weight_kg (number): Weight in kilograms.\n  Returns:\n    result (object): JSON object with status and BMI value.",
         inputSchema: {
           type: "object",
           properties: {
@@ -148,7 +148,7 @@ server.setRequestHandler(ListToolsRequestSchema, async (request) => {
       },
       {
         name: "ncbi_bookshelf_search",
-        description: "Search the NCBI Bookshelf.\n  \n  Args:\n  - query (string): Required.\n  - max_results (number): 1–100, default 10.\n  \n  Returns:\n  - { status, query, total_results, books[] }\n  - books[] items: { id, title, authors[], publication_date, url }.\n  \n  Errors:\n  - { status: 'error', error_message }",
+        description: "  Search books and chapters in the NCBI Bookshelf.\n  Args:\n    query (string): Search query text.\n    max_results (number): Maximum number of results to return.\n  Returns:\n    result (object): JSON object with status, query parameters, and book records.",
         inputSchema: {
           type: "object",
           properties: {
@@ -169,7 +169,7 @@ server.setRequestHandler(ListToolsRequestSchema, async (request) => {
       },
       {
         name: "extract_dicom_metadata",
-        description: "Extract metadata from a DICOM file.\n  \n  Args:\n  - file_path (string): Required local path to a DICOM file.\n  \n  Returns:\n  - { status, patientName, patientId, studyDescription, seriesDescription }.\n  \n  Errors:\n  - { status: 'error', error_message }",
+        description: "  Extract key metadata from a local DICOM file.\n  Args:\n    file_path (string): Local filesystem path to the DICOM file.\n  Returns:\n    result (object): JSON object with status and selected DICOM metadata fields.",
         inputSchema: {
           type: "object",
           properties: {
@@ -183,7 +183,7 @@ server.setRequestHandler(ListToolsRequestSchema, async (request) => {
       },
       {
         name: "health_topics",
-        description: "Get evidence-based health topics from Health.gov.\n  \n  Args:\n  - topic (string): Required.\n  - language (string): 'en'|'es', default 'en'.\n  \n  Returns:\n  - { status, search_term, language, total_results, health_topics[] }\n  - health_topics[] items: { title, url, last_updated, section, description, content[] }.\n  \n  Errors:\n  - { status: 'error', error_message }",
+        description: "  Get evidence-based health topic summaries from Health.gov.\n  Args:\n    topic (string): Health topic search term.\n    language (string): Result language code, en or es.\n  Returns:\n    result (object): JSON object with status, topic, language, and topic entries.",
         inputSchema: {
           type: "object",
           properties: {
@@ -203,7 +203,7 @@ server.setRequestHandler(ListToolsRequestSchema, async (request) => {
       },
       {
         name: "clinical_trials_search",
-        description: "Search ClinicalTrials.gov studies.\n  \n  Args:\n  - condition (string): Required medical condition/disease.\n  - status (string): 'recruiting'|'completed'|'active'|'not_recruiting'|'all', default 'recruiting'.\n  - max_results (number): 1–100, default 10.\n  \n  Returns:\n  - { status, condition, search_status, total_results, trials[] }\n  - trials[] items: { nct_id, title, status, phase[], study_type, conditions[], locations[] { facility, city, state, country }, sponsor, url, eligibility { gender, min_age, max_age, healthy_volunteers } }.\n  \n  Errors:\n  - { status: 'error', error_message }",
+        description: "  Search clinical study records from ClinicalTrials.gov.\n  Args:\n    condition (string): Condition or disease name to search.\n    status (string): Trial status filter such as recruiting or completed.\n    max_results (number): Maximum number of trials to return.\n  Returns:\n    result (object): JSON object with status, query parameters, and trial records.",
         inputSchema: {
           type: "object",
           properties: {
@@ -230,7 +230,7 @@ server.setRequestHandler(ListToolsRequestSchema, async (request) => {
       },
       {
         name: "lookup_icd_code",
-        description: "Look up ICD-10 codes and descriptions.\n  \n  Args:\n  - code (string): Optional if description provided.\n  - description (string): Optional if code provided.\n  - max_results (number): 1–50, default 10.\n  \n  Returns:\n  - { status, search_type, search_term, total_results, codes[] }\n  - codes[] items: { code, description, category }.\n  \n  Errors:\n  - { status: 'error', error_message }",
+        description: "  Look up ICD-10 diagnosis codes and descriptions.\n  Args:\n    code (string): ICD-10 code to look up (optional if description is provided).\n    description (string): Condition description to search (optional if code is provided).\n    max_results (number): Maximum number of code records to return.\n  Returns:\n    result (object): JSON object with status, search parameters, and code records.",
         inputSchema: {
           type: "object",
           properties: {
@@ -254,7 +254,7 @@ server.setRequestHandler(ListToolsRequestSchema, async (request) => {
       },
       {
         name: "get_usage_stats",
-        description: "Get usage for the current session.\n  \n  Returns:\n  - { status, session_id, session_start, total_calls, tool_usage { [toolName]: count } }",
+        description: "  Get usage statistics for the current MCP session.\n  Args:\n    (none): This tool takes no input arguments.\n  Returns:\n    result (object): JSON object with session ID, start time, and tool call counts.",
         inputSchema: {
           type: "object",
           properties: {},
@@ -262,7 +262,7 @@ server.setRequestHandler(ListToolsRequestSchema, async (request) => {
       },
       {
         name: "get_all_usage_stats",
-        description: "Get overall usage across sessions.\n  \n  Returns:\n  - { status, overall_stats { session_start, total_calls, tool_usage { [toolName]: count } } }",
+        description: "  Get aggregated usage statistics across all sessions.\n  Args:\n    (none): This tool takes no input arguments.\n  Returns:\n    result (object): JSON object with overall usage statistics by session and tool.",
         inputSchema: {
           type: "object",
           properties: {},

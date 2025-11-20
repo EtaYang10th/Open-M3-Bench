@@ -54,15 +54,7 @@ class TMDBServer {
       tools: [
         {
           name: 'search_movies',
-          description: `Search for movies using The Movie Database API.
-
-Args:
-  query (string): Search query text. Required.
-  year (number, optional): Filter by release year.
-  page (number, optional): Page number (default: 1).
-
-Returns:
-  text: JSON string of TMDB /search/movie response.`,
+          description: "  Search for movies using The Movie Database API.\n  Args:\n    query (string): Search query text.\n    year (number): Optional filter by release year.\n    page (number): Optional page number, defaults to 1.\n  Returns:\n    result (text): JSON string of the TMDB /search/movie response.",
           inputSchema: {
             type: 'object',
             properties: {

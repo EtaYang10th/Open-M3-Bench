@@ -139,20 +139,19 @@ class MultimodalMCPServer:
             temperature: Optional[float] = 0.7,
             provider: Optional[str] = None
         ) -> str:
-            """Generate response from multimodal model.
-
-            Args:
-                model: Model name to use
-                prompt: Text prompt
-                image_urls: Optional list of image URLs
-                file_paths: Optional list of file paths
-                system_prompt: Optional system prompt
-                max_tokens: Maximum tokens to generate
-                temperature: Generation temperature
-                provider: Optional provider name (openai, dashscope)
-
-            Returns:
-                Generated response text
+            """
+              Generate a multimodal model response from text, images, and files.
+              Args:
+                model (str): Model identifier to use for generation.
+                prompt (str): Main user text prompt.
+                image_urls (Optional[List[str]]): Optional image URLs to include.
+                file_paths (Optional[List[str]]): Optional local file paths to include.
+                system_prompt (Optional[str]): Optional system-level instruction.
+                max_tokens (Optional[int]): Maximum output tokens to generate.
+                temperature (Optional[float]): Sampling temperature for generation.
+                provider (Optional[str]): Provider name such as openai or dashscope.
+              Returns:
+                result (str): Generated response text with optional token usage note.
             """
             try:
                 # Auto-detect provider if not specified
@@ -230,10 +229,11 @@ class MultimodalMCPServer:
 
         @self.server.tool()
         def list_available_providers() -> str:
-            """List available model providers and their configurations.
-
-            Returns:
-                JSON string of available providers and their models
+            """
+              List available model providers and basic configuration details.
+              Args:
+              Returns:
+                result (str): JSON string describing providers, models, and defaults.
             """
             providers_info = {}
 
@@ -271,16 +271,15 @@ class MultimodalMCPServer:
             file_count: int = 0,
             provider: Optional[str] = None
         ) -> str:
-            """Validate if a multimodal request is supported.
-
-            Args:
-                model: Model name to validate
-                image_count: Number of images in request
-                file_count: Number of files in request
-                provider: Optional provider name
-
-            Returns:
-                Validation result
+            """
+              Validate whether a multimodal request is supported by a provider.
+              Args:
+                model (str): Model identifier to check.
+                image_count (int): Number of images that will be sent.
+                file_count (int): Number of files that will be sent.
+                provider (Optional[str]): Optional provider name override.
+              Returns:
+                result (str): Text message indicating request validity or error.
             """
             try:
                 # Auto-detect provider if not specified

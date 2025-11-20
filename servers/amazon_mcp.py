@@ -39,21 +39,14 @@ def search_products(
     amazon_domain: str = "amazon.com",
 ) -> str:
     """
-    Search Amazon by keywords via Rainforest API and return a concise, plain-text list of products.
-
-    Args:
-        keywords (str): Search terms.
-        n (int): Desired number of results (1–10). Defaults to 1.
-        page (int): Result page number (>=1). Defaults to 1.
-        amazon_domain (str): Domain like "amazon.com". Defaults to "amazon.com".
-
-    Returns:
-        str: Plain text. Up to `n` product blocks, each containing:
-            - a title line prefixed with "- "
-            - the product URL
-            - the main image URL
-            - a price line in the form "Price: $…" (or "N/A")
-        Returns "No results." if none found, or an error string when the API call fails.
+      Search Amazon products via Rainforest API and return a concise plain-text list.
+      Args:
+        keywords (str): Product search keywords.
+        n (int): Number of results to include (1–10).
+        page (int): Result page index starting from 1.
+        amazon_domain (str): Amazon domain such as "amazon.com".
+      Returns:
+        result (str): Plain-text list of up to n products or an error message.
     """
     if not RAINFOREST_API_KEY:
         return "Rainforest API key not configured."
@@ -103,20 +96,12 @@ def get_product(
     amazon_domain: str = "amazon.com",
 ) -> str:
     """
-    Retrieve details for a specific Amazon ASIN via Rainforest API.
-
-    Args:
+      Retrieve product details for a specific Amazon ASIN via Rainforest API.
+      Args:
         asin (str): Amazon Standard Identification Number.
-        amazon_domain (str): Domain like "amazon.com". Defaults to "amazon.com".
-
-    Returns:
-        str: Plain text block including:
-            - a bolded title line
-            - the product URL
-            - the main image URL
-            - a price line in the form "Price: $…" (or "N/A")
-            - optionally a "Features:" list, one per line prefixed with "- "
-        Returns "No product found." if unavailable, or an error string when the API call fails.
+        amazon_domain (str): Amazon domain such as "amazon.com".
+      Returns:
+        result (str): Plain-text block with title, URLs, price, features, or an error message.
     """
     if not RAINFOREST_API_KEY:
         return "Rainforest API key not configured."

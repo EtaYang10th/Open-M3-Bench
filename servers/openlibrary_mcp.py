@@ -65,25 +65,13 @@ def get_book_info(
     author: Optional[str] = None,
 ) -> dict:
     """
-    Look up book metadata from OpenLibrary by ISBN or by a free-text title (optionally with author).
-
-    Args:
-        isbn (Optional[str]): ISBN-10 or ISBN-13. Preferred when available.
-        title (Optional[str]): Book title for text search when ISBN is not provided.
-        author (Optional[str]): Author name to refine title-based search.
-
-    Returns:
-        dict: A dictionary (sanitized) where most core fields are under `metadata`.
-            On success (ISBN):
-            - metadata: {isbn, title, authors, publisher, publish_date, pages}
-            - query_type (str): "isbn"
-            On success (search):
-            - metadata: {isbn, title, authors, publisher, publish_date}
-            - query_type (str): "search"
-            - query (str): The query used for the search
-            On not found or error, includes one of:
-            - message (str): Not-found message
-            - error (str): Error description
+      Look up book metadata from OpenLibrary by ISBN or title with optional author filter.
+      Args:
+        isbn (Optional[str]): Book ISBN-10 or ISBN-13, preferred when available.
+        title (Optional[str]): Book title used for text search when ISBN is not provided.
+        author (Optional[str]): Author name to narrow title-based search.
+      Returns:
+        result (dict): Sanitized dictionary with core book metadata, messages, or error details.
     """
 
     try:

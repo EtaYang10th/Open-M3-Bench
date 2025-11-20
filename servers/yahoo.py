@@ -54,21 +54,14 @@ def get_historical_stock_prices(
     ticker: str, start_date: str, end_date: str, interval: str = "1d"
 ) -> str:
     """
-    Get historical stock prices for a given ticker symbol from Yahoo Finance.
-
-    Include: Date, Open, High, Low, Close, Volume, Adj Close.
-
-    Args:
-        ticker: str
-            The ticker symbol of the stock to get historical prices for, e.g. "AAPL"
-        start_date: str
-            format: yyyy-mm-dd
-        end_date: str
-            format: yyyy-mm-dd
-        interval: str
-            Valid intervals: 1m,2m,5m,15m,30m,60m,90m,1h,1d,5d,1wk,1mo,3mo
-            Intraday data cannot extend last 60 days
-            Default is "1d"
+      Get historical stock price OHLCV data for a ticker from Yahoo Finance.
+      Args:
+        ticker (str): Stock ticker symbol.
+        start_date (str): Start date in YYYY-MM-DD format.
+        end_date (str): End date in YYYY-MM-DD format.
+        interval (str): Price interval such as 1d or 1h.
+      Returns:
+        result (str): JSON array of records with date and price fields.
     """
     company = yf.Ticker(ticker)
     try:
@@ -85,17 +78,11 @@ def get_historical_stock_prices(
 @server.tool()
 def get_stock_info(ticker: str) -> str:
     """
-    Get stock information for a given ticker symbol from Yahoo Finance.
-
-    Include:
-    - Stock Price & Trading Info
-    - Company Information
-    - Financial Metrics
-    - Earnings & Revenue
-    - Margins & Returns
-    - Dividends, Balance Sheet
-    - Ownership, Analyst Coverage
-    - Risk Metrics, Other
+      Get general stock and company information for a ticker from Yahoo Finance.
+      Args:
+        ticker (str): Stock ticker symbol.
+      Returns:
+        result (str): JSON object of Yahoo Finance info fields.
     """
     company = yf.Ticker(ticker)
     try:
@@ -110,11 +97,11 @@ def get_stock_info(ticker: str) -> str:
 @server.tool()
 def get_yahoo_finance_news(ticker: str) -> str:
     """
-    Get news for a given ticker symbol from Yahoo Finance.
-
-    Args:
-        ticker: str
-            The ticker symbol of the stock to get news for, e.g. "AAPL"
+      Get recent news items for a ticker from Yahoo Finance.
+      Args:
+        ticker (str): Stock ticker symbol.
+      Returns:
+        result (str): Plain-text list of titles and links for each news item.
     """
     company = yf.Ticker(ticker)
     try:
@@ -138,11 +125,11 @@ def get_yahoo_finance_news(ticker: str) -> str:
 @server.tool()
 def get_stock_actions(ticker: str) -> str:
     """
-    Get stock dividends and stock splits for a given ticker symbol from Yahoo Finance.
-
-    Args:
-        ticker: str
-            The ticker symbol of the stock to get stock actions for, e.g. "AAPL"
+      Get dividend and split actions for a ticker from Yahoo Finance.
+      Args:
+        ticker (str): Stock ticker symbol.
+      Returns:
+        result (str): JSON array of corporate action records.
     """
     try:
         company = yf.Ticker(ticker)
@@ -156,12 +143,12 @@ def get_stock_actions(ticker: str) -> str:
 @server.tool()
 def get_financial_statement(ticker: str, financial_type: str) -> str:
     """
-    Get financial statement for a given ticker symbol from Yahoo Finance.
-
-    Available types:
-        income_stmt, quarterly_income_stmt,
-        balance_sheet, quarterly_balance_sheet,
-        cashflow, quarterly_cashflow
+      Get a selected financial statement for a ticker from Yahoo Finance.
+      Args:
+        ticker (str): Stock ticker symbol.
+        financial_type (str): Statement type such as income_stmt or balance_sheet.
+      Returns:
+        result (str): JSON array of statement records keyed by date.
     """
     company = yf.Ticker(ticker)
     try:
@@ -199,11 +186,12 @@ def get_financial_statement(ticker: str, financial_type: str) -> str:
 @server.tool()
 def get_holder_info(ticker: str, holder_type: str) -> str:
     """
-    Get holder information for a given ticker symbol from Yahoo Finance.
-
-    Holder types:
-        major_holders, institutional_holders, mutualfund_holders,
-        insider_transactions, insider_purchases, insider_roster_holders
+      Get holder or ownership information for a ticker from Yahoo Finance.
+      Args:
+        ticker (str): Stock ticker symbol.
+        holder_type (str): Holder info type such as major_holders or institutional_holders.
+      Returns:
+        result (str): JSON array of holder records.
     """
     company = yf.Ticker(ticker)
     try:
@@ -233,11 +221,11 @@ def get_holder_info(ticker: str, holder_type: str) -> str:
 @server.tool()
 def get_option_expiration_dates(ticker: str) -> str:
     """
-    Fetch the available options expiration dates for a given ticker symbol.
-
-    Args:
-        ticker: str
-            The ticker symbol of the stock to get option expiration dates for, e.g. "AAPL"
+      Get available option expiration dates for a ticker.
+      Args:
+        ticker (str): Stock ticker symbol.
+      Returns:
+        result (str): JSON list of expiration date strings.
     """
     company = yf.Ticker(ticker)
     try:
@@ -249,15 +237,13 @@ def get_option_expiration_dates(ticker: str) -> str:
 @server.tool()
 def get_option_chain(ticker: str, expiration_date: str, option_type: str) -> str:
     """
-    Fetch the option chain for a given ticker symbol, expiration date, and option type.
-
-    Args:
-        ticker: str
-            Stock ticker symbol (e.g. "AAPL")
-        expiration_date: str
-            The expiration date (format: 'YYYY-MM-DD')
-        option_type: str
-            The type of option to fetch ('calls' or 'puts')
+      Get an option chain for a ticker, expiration date, and calls or puts side.
+      Args:
+        ticker (str): Stock ticker symbol.
+        expiration_date (str): Expiration date in YYYY-MM-DD format.
+        option_type (str): Which side to return, 'calls' or 'puts'.
+      Returns:
+        result (str): JSON array of option contracts.
     """
     company = yf.Ticker(ticker)
     try:
@@ -276,15 +262,13 @@ def get_option_chain(ticker: str, expiration_date: str, option_type: str) -> str
 @server.tool()
 def get_recommendations(ticker: str, recommendation_type: str, months_back: int = 12) -> str:
     """
-    Get recommendations or upgrades/downgrades for a given ticker symbol from Yahoo Finance.
-
-    Args:
-        ticker: str
-            e.g. "AAPL"
-        recommendation_type: str
-            recommendations / upgrades_downgrades
-        months_back: int
-            How many months back to include (default: 12)
+      Get analyst recommendations or upgrades/downgrades for a ticker.
+      Args:
+        ticker (str): Stock ticker symbol.
+        recommendation_type (str): 'recommendations' or 'upgrades_downgrades'.
+        months_back (int): How many months of history to include.
+      Returns:
+        result (str): JSON array of recommendation records.
     """
     company = yf.Ticker(ticker)
     try:

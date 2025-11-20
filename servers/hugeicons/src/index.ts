@@ -70,7 +70,7 @@ class HugeiconsServer {
       tools: [
         {
           name: "list_icons",
-          description: "Get a list of all available Hugeicons icons",
+          description: "  List all available Hugeicons icons.\n  Args:\n    (none)\n  Returns:\n    result (text): JSON string containing the full icon index.",
           inputSchema: {
             type: "object",
             properties: {},
@@ -79,7 +79,7 @@ class HugeiconsServer {
         },
         {
           name: "search_icons",
-          description: "Search for icons by name or tags. Use commas to search for multiple icons (e.g. 'home, notification, settings')",
+          description: "  Search icons by name or tags.\n  Args:\n    query (string): Search query string; multiple terms may be comma-separated.\n  Returns:\n    result (text): JSON string with matching icons and metadata.",
           inputSchema: {
             type: "object",
             properties: {
@@ -93,7 +93,7 @@ class HugeiconsServer {
         },
         {
           name: "get_platform_usage",
-          description: "Get platform-specific usage instructions for Hugeicons",
+          description: "  Get platform-specific usage instructions for Hugeicons.\n  Args:\n    platform (string): Target platform such as react, vue, or html.\n  Returns:\n    result (text): Markdown or JSON text describing usage instructions.",
           inputSchema: {
             type: "object",
             properties: {
@@ -108,7 +108,7 @@ class HugeiconsServer {
         },
         {
           name: "get_icon_glyphs",
-          description: "Get all glyphs (unicode characters) for a specific icon across all available styles",
+          description: "  Get all glyphs for an icon across supported styles.\n  Args:\n    icon_name (string): Icon identifier name.\n  Returns:\n    result (text): JSON string listing glyphs by style.",
           inputSchema: {
             type: "object",
             properties: {
@@ -122,7 +122,7 @@ class HugeiconsServer {
         },
         {
           name: "get_icon_glyph_by_style",
-          description: "Get the glyph (unicode character) for a specific icon with a particular style",
+          description: "  Get the glyph for an icon in a specific style.\n  Args:\n    icon_name (string): Icon identifier name.\n    style (string): Icon style value.\n  Returns:\n    result (text): JSON string with the requested glyph entry.",
           inputSchema: {
             type: "object",
             properties: {

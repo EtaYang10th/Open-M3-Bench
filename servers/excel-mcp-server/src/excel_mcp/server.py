@@ -100,8 +100,14 @@ def apply_formula(
     formula: str,
 ) -> str:
     """
-    Apply Excel formula to cell.
-    Excel formula will write to cell with verification.
+    Apply an Excel formula to a cell with validation.
+    Args:
+      filepath (str): Path to the Excel file.
+      sheet_name (str): Worksheet name.
+      cell (str): Target cell address.
+      formula (str): Excel formula to apply.
+    Returns:
+      message (str): Result of applying the formula or an error message.
     """
     try:
         full_path = get_excel_path(filepath)
@@ -127,7 +133,16 @@ def validate_formula_syntax(
     cell: str,
     formula: str,
 ) -> str:
-    """Validate Excel formula syntax without applying it."""
+    """
+    Validate Excel formula syntax without writing it to the sheet.
+    Args:
+      filepath (str): Path to the Excel file.
+      sheet_name (str): Worksheet name.
+      cell (str): Cell address for context.
+      formula (str): Excel formula to validate.
+    Returns:
+      message (str): Validation result or an error message.
+    """
     try:
         full_path = get_excel_path(filepath)
         result = validate_formula_impl(full_path, sheet_name, cell, formula)
@@ -159,7 +174,32 @@ def format_range(
     protection: Optional[Dict[str, Any]] = None,
     conditional_format: Optional[Dict[str, Any]] = None
 ) -> str:
-    """Apply formatting to a range of cells."""
+    """
+    Apply formatting options to a range of cells.
+
+    Args:
+      filepath (str): Path to the Excel file.
+      sheet_name (str): Worksheet name.
+      start_cell (str): Start cell of the range.
+      end_cell (Optional[str]): End cell of the range.
+      bold (bool): Whether to apply bold text.
+      italic (bool): Whether to apply italic text.
+      underline (bool): Whether to underline text.
+      font_size (Optional[int]): Font size.
+      font_color (Optional[str]): Font color in hex or name.
+      bg_color (Optional[str]): Background color in hex or name.
+      border_style (Optional[str]): Border style.
+      border_color (Optional[str]): Border color.
+      number_format (Optional[str]): Number format string.
+      alignment (Optional[str]): Text alignment.
+      wrap_text (bool): Whether to wrap text.
+      merge_cells (bool): Whether to merge the range.
+      protection (Optional[Dict[str, Any]]): Cell protection options.
+      conditional_format (Optional[Dict[str, Any]]): Conditional format options.
+
+    Returns:
+      message (str): Result of the formatting operation or an error message.
+    """
     try:
         full_path = get_excel_path(filepath)
         from excel_mcp.formatting import format_range as format_range_func
@@ -201,18 +241,17 @@ def read_data_from_excel(
     preview_only: bool = False
 ) -> str:
     """
-    Read data from Excel worksheet with cell metadata including validation rules.
-    
+    Read worksheet data with cell metadata and validation rules.
+
     Args:
-        filepath: Path to Excel file
-        sheet_name: Name of worksheet
-        start_cell: Starting cell (default A1)
-        end_cell: Ending cell (optional, auto-expands if not provided)
-        preview_only: Whether to return preview only
-    
-    Returns:  
-    JSON string containing structured cell data with validation metadata.
-    Each cell includes: address, value, row, column, and validation info (if any).
+      filepath (str): Path to the Excel file.
+      sheet_name (str): Worksheet name.
+      start_cell (str): Starting cell address.
+      end_cell (Optional[str]): Ending cell address.
+      preview_only (bool): Whether to return a preview subset.
+
+    Returns:
+      data (str): JSON string of cell data, positions, and validation info.
     """
     try:
         full_path = get_excel_path(filepath)
@@ -242,15 +281,16 @@ def write_data_to_excel(
     start_cell: str = "A1",
 ) -> str:
     """
-    Write data to Excel worksheet.
-    Excel formula will write to cell without any verification.
+    Write tabular data to a worksheet starting at a given cell.
 
-    PARAMETERS:  
-    filepath: Path to Excel file
-    sheet_name: Name of worksheet to write to
-    data: List of lists containing data to write to the worksheet, sublists are assumed to be rows
-    start_cell: Cell to start writing to, default is "A1"
-  
+    Args:
+      filepath (str): Path to the Excel file.
+      sheet_name (str): Worksheet name.
+      data (List[List]): Two-dimensional list of row data.
+      start_cell (str): Top-left cell for writing.
+
+    Returns:
+      message (str): Result of the write operation or an error message.
     """
     try:
         full_path = get_excel_path(filepath)
@@ -264,7 +304,15 @@ def write_data_to_excel(
 
 @mcp.tool()
 def create_workbook(filepath: str) -> str:
-    """Create new Excel workbook."""
+    """
+    Create a new Excel workbook file.
+
+    Args:
+      filepath (str): Path where the workbook will be created.
+
+    Returns:
+      message (str): Creation result or an error message.
+    """
     try:
         full_path = get_excel_path(filepath)
         from excel_mcp.workbook import create_workbook as create_workbook_impl
@@ -278,7 +326,16 @@ def create_workbook(filepath: str) -> str:
 
 @mcp.tool()
 def create_worksheet(filepath: str, sheet_name: str) -> str:
-    """Create new worksheet in workbook."""
+    """
+    Create a new worksheet in an existing workbook.
+
+    Args:
+      filepath (str): Path to the Excel file.
+      sheet_name (str): Name of the new worksheet.
+
+    Returns:
+      message (str): Creation result or an error message.
+    """
     try:
         full_path = get_excel_path(filepath)
         from excel_mcp.workbook import create_sheet as create_worksheet_impl
@@ -301,7 +358,22 @@ def create_chart(
     x_axis: str = "",
     y_axis: str = ""
 ) -> str:
-    """Create chart in worksheet."""
+    """
+    Create a chart in a worksheet from a data range.
+
+    Args:
+      filepath (str): Path to the Excel file.
+      sheet_name (str): Worksheet containing the data.
+      data_range (str): Cell range used as chart data.
+      chart_type (str): Chart type identifier.
+      target_cell (str): Anchor cell for the chart.
+      title (str): Chart title.
+      x_axis (str): X-axis label.
+      y_axis (str): Y-axis label.
+
+    Returns:
+      message (str): Chart creation result or an error message.
+    """
     try:
         full_path = get_excel_path(filepath)
         result = create_chart_impl(
@@ -331,7 +403,21 @@ def create_pivot_table(
     columns: Optional[List[str]] = None,
     agg_func: str = "mean"
 ) -> str:
-    """Create pivot table in worksheet."""
+    """
+    Create a pivot table in a worksheet from a data range.
+
+    Args:
+      filepath (str): Path to the Excel file.
+      sheet_name (str): Worksheet containing the data.
+      data_range (str): Source data range.
+      rows (List[str]): Row field names.
+      values (List[str]): Value field names.
+      columns (Optional[List[str]]): Column field names.
+      agg_func (str): Aggregation function name.
+
+    Returns:
+      message (str): Pivot table creation result or an error message.
+    """
     try:
         full_path = get_excel_path(filepath)
         result = create_pivot_table_impl(
@@ -358,7 +444,19 @@ def create_table(
     table_name: Optional[str] = None,
     table_style: str = "TableStyleMedium9"
 ) -> str:
-    """Creates a native Excel table from a specified range of data."""
+    """
+    Create a native Excel table from a cell range.
+
+    Args:
+      filepath (str): Path to the Excel file.
+      sheet_name (str): Worksheet containing the range.
+      data_range (str): Cell range to convert to a table.
+      table_name (Optional[str]): Excel table name.
+      table_style (str): Built-in table style name.
+
+    Returns:
+      message (str): Table creation result or an error message.
+    """
     try:
         full_path = get_excel_path(filepath)
         result = create_table_impl(
@@ -381,7 +479,17 @@ def copy_worksheet(
     source_sheet: str,
     target_sheet: str
 ) -> str:
-    """Copy worksheet within workbook."""
+    """
+    Copy a worksheet within the same workbook.
+
+    Args:
+      filepath (str): Path to the Excel file.
+      source_sheet (str): Name of the worksheet to copy.
+      target_sheet (str): Name for the new copied worksheet.
+
+    Returns:
+      message (str): Copy result or an error message.
+    """
     try:
         full_path = get_excel_path(filepath)
         result = copy_sheet(full_path, source_sheet, target_sheet)
@@ -397,7 +505,16 @@ def delete_worksheet(
     filepath: str,
     sheet_name: str
 ) -> str:
-    """Delete worksheet from workbook."""
+    """
+    Delete a worksheet from a workbook.
+
+    Args:
+      filepath (str): Path to the Excel file.
+      sheet_name (str): Name of the worksheet to delete.
+
+    Returns:
+      message (str): Deletion result or an error message.
+    """
     try:
         full_path = get_excel_path(filepath)
         result = delete_sheet(full_path, sheet_name)
@@ -414,7 +531,17 @@ def rename_worksheet(
     old_name: str,
     new_name: str
 ) -> str:
-    """Rename worksheet in workbook."""
+    """
+    Rename an existing worksheet in a workbook.
+
+    Args:
+      filepath (str): Path to the Excel file.
+      old_name (str): Current worksheet name.
+      new_name (str): New worksheet name.
+
+    Returns:
+      message (str): Rename result or an error message.
+    """
     try:
         full_path = get_excel_path(filepath)
         result = rename_sheet(full_path, old_name, new_name)
@@ -430,7 +557,16 @@ def get_workbook_metadata(
     filepath: str,
     include_ranges: bool = False
 ) -> str:
-    """Get metadata about workbook including sheets, ranges, etc."""
+    """
+    Get workbook metadata such as sheets and named ranges.
+
+    Args:
+      filepath (str): Path to the Excel file.
+      include_ranges (bool): Whether to include range information.
+
+    Returns:
+      info (str): Stringified metadata or an error message.
+    """
     try:
         full_path = get_excel_path(filepath)
         result = get_workbook_info(full_path, include_ranges=include_ranges)
@@ -443,7 +579,18 @@ def get_workbook_metadata(
 
 @mcp.tool()
 def merge_cells(filepath: str, sheet_name: str, start_cell: str, end_cell: str) -> str:
-    """Merge a range of cells."""
+    """
+    Merge a contiguous range of cells.
+
+    Args:
+      filepath (str): Path to the Excel file.
+      sheet_name (str): Worksheet name.
+      start_cell (str): Start cell address.
+      end_cell (str): End cell address.
+
+    Returns:
+      message (str): Merge result or an error message.
+    """
     try:
         full_path = get_excel_path(filepath)
         result = merge_range(full_path, sheet_name, start_cell, end_cell)
@@ -456,7 +603,18 @@ def merge_cells(filepath: str, sheet_name: str, start_cell: str, end_cell: str) 
 
 @mcp.tool()
 def unmerge_cells(filepath: str, sheet_name: str, start_cell: str, end_cell: str) -> str:
-    """Unmerge a range of cells."""
+    """
+    Unmerge a previously merged cell range.
+
+    Args:
+      filepath (str): Path to the Excel file.
+      sheet_name (str): Worksheet name.
+      start_cell (str): Start cell address.
+      end_cell (str): End cell address.
+
+    Returns:
+      message (str): Unmerge result or an error message.
+    """
     try:
         full_path = get_excel_path(filepath)
         result = unmerge_range(full_path, sheet_name, start_cell, end_cell)
@@ -469,7 +627,16 @@ def unmerge_cells(filepath: str, sheet_name: str, start_cell: str, end_cell: str
 
 @mcp.tool()
 def get_merged_cells(filepath: str, sheet_name: str) -> str:
-    """Get merged cells in a worksheet."""
+    """
+    List merged cell ranges in a worksheet.
+
+    Args:
+      filepath (str): Path to the Excel file.
+      sheet_name (str): Worksheet name.
+
+    Returns:
+      info (str): Stringified merged ranges or an error message.
+    """
     try:
         full_path = get_excel_path(filepath)
         return str(get_merged_ranges(full_path, sheet_name))
@@ -488,7 +655,20 @@ def copy_range(
     target_start: str,
     target_sheet: Optional[str] = None
 ) -> str:
-    """Copy a range of cells to another location."""
+    """
+    Copy a cell range to another position or sheet.
+
+    Args:
+      filepath (str): Path to the Excel file.
+      sheet_name (str): Source worksheet name.
+      source_start (str): Start cell of the source range.
+      source_end (str): End cell of the source range.
+      target_start (str): Top-left target cell.
+      target_sheet (Optional[str]): Target worksheet name.
+
+    Returns:
+      message (str): Copy result or an error message.
+    """
     try:
         full_path = get_excel_path(filepath)
         from excel_mcp.sheet import copy_range_operation
@@ -515,7 +695,19 @@ def delete_range(
     end_cell: str,
     shift_direction: str = "up"
 ) -> str:
-    """Delete a range of cells and shift remaining cells."""
+    """
+    Delete a cell range and shift remaining cells.
+
+    Args:
+      filepath (str): Path to the Excel file.
+      sheet_name (str): Worksheet name.
+      start_cell (str): Start cell of the range.
+      end_cell (str): End cell of the range.
+      shift_direction (str): Shift direction for remaining cells.
+
+    Returns:
+      message (str): Deletion result or an error message.
+    """
     try:
         full_path = get_excel_path(filepath)
         from excel_mcp.sheet import delete_range_operation
@@ -540,7 +732,18 @@ def validate_excel_range(
     start_cell: str,
     end_cell: Optional[str] = None
 ) -> str:
-    """Validate if a range exists and is properly formatted."""
+    """
+    Validate that a cell range exists and is well-formed.
+
+    Args:
+      filepath (str): Path to the Excel file.
+      sheet_name (str): Worksheet name.
+      start_cell (str): Start cell of the range.
+      end_cell (Optional[str]): End cell of the range.
+
+    Returns:
+      message (str): Validation result or an error message.
+    """
     try:
         full_path = get_excel_path(filepath)
         range_str = start_cell if not end_cell else f"{start_cell}:{end_cell}"
@@ -558,17 +761,14 @@ def get_data_validation_info(
     sheet_name: str
 ) -> str:
     """
-    Get all data validation rules in a worksheet.
-    
-    This tool helps identify which cell ranges have validation rules
-    and what types of validation are applied.
-    
+    Get all data validation rules defined in a worksheet.
+
     Args:
-        filepath: Path to Excel file
-        sheet_name: Name of worksheet
-        
+      filepath (str): Path to the Excel file.
+      sheet_name (str): Worksheet name.
+
     Returns:
-        JSON string containing all validation rules in the worksheet
+      rules (str): JSON string of validation rules or a message if none.
     """
     try:
         full_path = get_excel_path(filepath)
@@ -603,7 +803,18 @@ def insert_rows(
     start_row: int,
     count: int = 1
 ) -> str:
-    """Insert one or more rows starting at the specified row."""
+    """
+    Insert one or more rows at a given position.
+
+    Args:
+      filepath (str): Path to the Excel file.
+      sheet_name (str): Worksheet name.
+      start_row (int): First row index to insert at.
+      count (int): Number of rows to insert.
+
+    Returns:
+      message (str): Insert result or an error message.
+    """
     try:
         full_path = get_excel_path(filepath)
         result = insert_row(full_path, sheet_name, start_row, count)
@@ -621,7 +832,18 @@ def insert_columns(
     start_col: int,
     count: int = 1
 ) -> str:
-    """Insert one or more columns starting at the specified column."""
+    """
+    Insert one or more columns at a given position.
+
+    Args:
+      filepath (str): Path to the Excel file.
+      sheet_name (str): Worksheet name.
+      start_col (int): First column index to insert at.
+      count (int): Number of columns to insert.
+
+    Returns:
+      message (str): Insert result or an error message.
+    """
     try:
         full_path = get_excel_path(filepath)
         result = insert_cols(full_path, sheet_name, start_col, count)
@@ -639,7 +861,18 @@ def delete_sheet_rows(
     start_row: int,
     count: int = 1
 ) -> str:
-    """Delete one or more rows starting at the specified row."""
+    """
+    Delete one or more rows starting at a given position.
+
+    Args:
+      filepath (str): Path to the Excel file.
+      sheet_name (str): Worksheet name.
+      start_row (int): First row index to delete.
+      count (int): Number of rows to delete.
+
+    Returns:
+      message (str): Deletion result or an error message.
+    """
     try:
         full_path = get_excel_path(filepath)
         result = delete_rows(full_path, sheet_name, start_row, count)
@@ -657,7 +890,18 @@ def delete_sheet_columns(
     start_col: int,
     count: int = 1
 ) -> str:
-    """Delete one or more columns starting at the specified column."""
+    """
+    Delete one or more columns starting at a given position.
+
+    Args:
+      filepath (str): Path to the Excel file.
+      sheet_name (str): Worksheet name.
+      start_col (int): First column index to delete.
+      count (int): Number of columns to delete.
+
+    Returns:
+      message (str): Deletion result or an error message.
+    """
     try:
         full_path = get_excel_path(filepath)
         result = delete_cols(full_path, sheet_name, start_col, count)

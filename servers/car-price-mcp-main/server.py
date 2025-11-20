@@ -1,65 +1,39 @@
 from mcp.server.fastmcp import FastMCP
-from app import getCarBrands, searchCarPrice, getCarsByType
+from app import getCarBrands, searchBrandModelPrice
 
-# Initialize MCP server
 mcp = FastMCP("car-price-mcp")
+
 
 @mcp.tool()
 async def get_car_brands() -> str:
     """
-    Get all available car brands from FIPE API.
-    
-    Returns:
-        List of car brands with their codes and names
+      Get all available car brands from FIPE via the fipe.online API.
+      Args:
+        (none)
+      Returns:
+        result (str): JSON string containing the list of brand identifiers and names.
     """
-    # Get car brands from the app
-    brands_info = getCarBrands()
-    if not brands_info:
-        return "No car brands information found."
+    return getCarBrands()
 
-    return brands_info
 
 @mcp.tool()
-async def search_car_price(brand_name: str) -> str:
+async def search_brand_model_price(brand_name: str, model_keyword: str) -> str:
     """
-    Search for car models and prices by brand name.
-    
-    Args:
-        brand_name: The car brand name to search for (e.g., "Toyota", "Honda", "Ford")
-    
-    Returns:
-        Car models with current market prices from FIPE database
+      Search car model prices for a brand using a model name keyword.
+      Args:
+        brand_name (str): Car brand name to search, such as a manufacturer name.
+        model_keyword (str): Substring or keyword of the model name.
+      Returns:
+        result (str): JSON string listing matching models and their latest FIPE prices.
     """
     if not brand_name or not brand_name.strip():
-        return "Please provide a car brand name to search for."
-    
-    # Search for car prices
-    car_info = searchCarPrice(brand_name.strip())
-    if not car_info:
-        return f"No car information found for '{brand_name}'."
+        return "Please provide brand_name."
 
-    return car_info
+    if not model_keyword or not model_keyword.strip():
+        return "Please provide model_keyword."
 
-@mcp.tool()
-async def get_vehicles_by_type(vehicle_type: str = "carros") -> str:
-    """
-    Get vehicles by type (cars, motorcycles, trucks).
-    
-    Args:
-        vehicle_type: Type of vehicles to fetch ("carros"/"cars", "motos"/"motorcycles", "caminhoes"/"trucks")
-    
-    Returns:
-        List of vehicle brands for the specified type
-    """
-    if not vehicle_type or not vehicle_type.strip():
-        vehicle_type = "carros"
-    
-    # Get vehicles by type
-    vehicles_info = getCarsByType(vehicle_type.strip())
-    if not vehicles_info:
-        return f"No {vehicle_type} information found."
+    return searchBrandModelPrice(brand_name.strip(), model_keyword.strip())
 
-    return vehicles_info
 
 if __name__ == "__main__":
     mcp.run(transport="stdio")

@@ -25,20 +25,16 @@ def crop(
     output_path: Optional[str] = None
 ) -> dict:
     """
-    Crop an image using OpenCV's slicing.
-
-    Args:
-        input_path (str): Full path to the input image.
+      Crop an image to a rectangular region using OpenCV.
+      Args:
+        input_path (str): Full path to the input image file.
         x1 (int): X-coordinate of the top-left corner.
         y1 (int): Y-coordinate of the top-left corner.
         x2 (int): X-coordinate of the bottom-right corner.
         y2 (int): Y-coordinate of the bottom-right corner.
-        output_path (Optional[str]): Full path to save the cropped image.
-            If not provided, a new file with '_cropped' suffix will be saved.
-            you should not give output_path in this task.
-
-    Returns:
-        images: Path to the cropped image.
+        output_path (Optional[str]): Optional path to save the cropped image.
+      Returns:
+        result (dict): Dictionary containing a list of output image paths.
     """
     logger.info(f"[crop] Requested for image: {input_path}, region=({x1}, {y1}, {x2}, {y2})")
 
@@ -79,19 +75,14 @@ def blur(
     output_path: Optional[str] = None
 ) -> dict:
     """
-    Blur specified rectangular or polygonal areas of an image using OpenCV.
-
-    Args:
-        input_path (str): Full path to input image.
-        areas (List[Dict]): List of blur regions.
-            Each can be:
-              - {'x1': int, 'y1': int, 'x2': int, 'y2': int, 'blur_strength': int (optional)}
-              - {'polygon': [[x, y], ...], 'blur_strength': int (optional)}
-        invert_areas (bool): If True, blur everything EXCEPT the specified areas.
-        output_path (Optional[str]): Full path to save output image. If not given, adds "_blurred" suffix.
-
-    Returns:
-        images: Path to the saved blurred image.
+      Blur specified rectangular or polygonal areas of an image.
+      Args:
+        input_path (str): Full path to the input image file.
+        areas (List[Dict[str, Any]]): List of regions to blur, by box or polygon.
+        invert_areas (bool): Whether to blur everything except the specified areas.
+        output_path (Optional[str]): Optional path to save the blurred image.
+      Returns:
+        result (dict): Dictionary containing a list of output image paths.
     """
     logger.info(f"[blur] Requested for image: {input_path}, {len(areas)} area(s), invert={invert_areas}")
 
@@ -145,15 +136,13 @@ def draw_arrows(
     output_path: Optional[str] = None
 ) -> dict:
     """
-    Draw arrows on an image using OpenCV.
-
-    Args:
-        input_path (str): Full path to input image.
-        arrows (List[Dict]): List of arrows, each with keys: x1, y1, x2, y2, and optional color, thickness, tip_length.
-        output_path (Optional[str]): Path to save output image. Defaults to '_with_arrows' suffix.
-
-    Returns:
-        images: Path to image with arrows drawn.
+      Draw one or more arrows on an image.
+      Args:
+        input_path (str): Full path to the input image file.
+        arrows (List[Dict[str, Any]]): Arrow specifications including endpoints and style.
+        output_path (Optional[str]): Optional path to save the output image.
+      Returns:
+        result (dict): Dictionary containing a list of output image paths.
     """
     logger.info(f"Draw arrows tool requested for image: {input_path} with {len(arrows)} arrows")
 
@@ -190,15 +179,13 @@ def change_color(
     output_path: Optional[str] = None
 ) -> dict:
     """
-    Change the color palette of an image.
-
-    Args:
-        input_path (str): Full path to input image.
-        palette (Literal): 'grayscale' or 'sepia'.
-        output_path (Optional[str]): Path to save output. Defaults to '_grayscale' or '_sepia'.
-
-    Returns:
-        images: Path to the image with new color palette.
+      Change the color palette of an image to grayscale or sepia.
+      Args:
+        input_path (str): Full path to the input image file.
+        palette (Literal["grayscale","sepia"]): Target color style.
+        output_path (Optional[str]): Optional path to save the converted image.
+      Returns:
+        result (dict): Dictionary containing a list of output image paths.
     """
     logger.info(f"Change color tool requested for image: {input_path} with palette: {palette}")
 
@@ -241,24 +228,13 @@ class CircleItem(BaseModel):
 @server.tool()
 def draw_circles(input_path: str, circles: List[CircleItem], output_path: Optional[str] = None) -> dict:
     """
-    Draw one or more circles on an image using OpenCV.
-
-    Each circle is defined by:
-    - `center_x` (int): X-coordinate of the center of the circle.
-    - `center_y` (int): Y-coordinate of the center of the circle.
-    - `radius` (int): Radius of the circle in pixels.
-    - `color` (list of int): BGR color of the circle, e.g., [255, 0, 0] for blue.
-    - `thickness` (int): Line thickness. Ignored if `filled=True`.
-    - `filled` (bool): If True, the circle will be filled regardless of `thickness`.
-
-    Args:
-        input_path (str): Full path to the input image.
-        circles (List[CircleItem]): List of circle definitions.
-        output_path (Optional[str]): Optional path to save the resulting image. If not provided,
-                                     will save to a file with '_with_circles' suffix.
-
-    Returns:
-        images: Full path to the saved image with drawn circles.
+      Draw one or more circles on an image using circle definitions.
+      Args:
+        input_path (str): Full path to the input image file.
+        circles (List[CircleItem]): List of circle items with center, radius, color, and style.
+        output_path (Optional[str]): Optional path to save the result image.
+      Returns:
+        result (dict): Dictionary containing a list of output image paths.
     """
     logger.info(f"[draw_circles] Requested on image: {input_path}, circles={len(circles)}")
 
@@ -288,22 +264,13 @@ def draw_circles(input_path: str, circles: List[CircleItem], output_path: Option
 @server.tool()
 def draw_lines(input_path: str, lines: List[Dict[str, Any]], output_path: Optional[str] = None) -> dict:
     """
-    Draw one or more lines on an image using OpenCV.
-
-    Each line is defined by:
-    - `x1`, `y1`: Coordinates of the line start point.
-    - `x2`, `y2`: Coordinates of the line end point.
-    - `color`: Optional. BGR color as list of 3 integers (default: [0, 0, 0]).
-    - `thickness`: Optional. Line thickness (default: 1).
-
-    Args:
-        input_path (str): Path to the input image file.
-        lines (List[Dict[str, Any]]): List of lines to draw, each represented as a dictionary.
-        output_path (Optional[str]): Path to save the output image. If not provided,
-                                     '_with_lines' will be appended to the input filename.
-
-    Returns:
-        images: Path to the resulting image with drawn lines.
+      Draw one or more straight lines on an image.
+      Args:
+        input_path (str): Full path to the input image file.
+        lines (List[Dict[str, Any]]): Line specifications including endpoints and style.
+        output_path (Optional[str]): Optional path to save the output image.
+      Returns:
+        result (dict): Dictionary containing a list of output image paths.
     """
     logger.info(f"[draw_lines] Requested for image: {input_path} with {len(lines)} lines")
 
@@ -333,27 +300,13 @@ def draw_lines(input_path: str, lines: List[Dict[str, Any]], output_path: Option
 @server.tool()
 def draw_texts(input_path: str, texts: List[Dict[str, Any]], output_path: Optional[str] = None) -> dict:
     """
-    Draw one or more text elements on an image using OpenCV.
-
-    Each text item supports:
-    - `text` (str): Text string to be drawn.
-    - `x`, `y` (int): Bottom-left corner position for the text.
-    - `font_scale` (float, optional): Scale of the font (default: 1.0).
-    - `color` (list of int): BGR color [B, G, R] (default: [0, 0, 0]).
-    - `thickness` (int): Thickness of the text (default: 1).
-    - `font_face` (str): Optional font style. Must be one of:
-        'FONT_HERSHEY_SIMPLEX', 'FONT_HERSHEY_PLAIN', 'FONT_HERSHEY_DUPLEX',
-        'FONT_HERSHEY_COMPLEX', 'FONT_HERSHEY_TRIPLEX', 'FONT_HERSHEY_COMPLEX_SMALL',
-        'FONT_HERSHEY_SCRIPT_SIMPLEX', 'FONT_HERSHEY_SCRIPT_COMPLEX'.
-
-    Args:
-        input_path (str): Path to the input image.
-        texts (List[Dict[str, Any]]): List of text specifications.
-        output_path (Optional[str]): Optional output path. If not given, saves to
-                                     '<input>_with_text<ext>'.
-
-    Returns:
-        images: Path to the image with rendered text.
+      Draw one or more text labels on an image.
+      Args:
+        input_path (str): Full path to the input image file.
+        texts (List[Dict[str, Any]]): Text specifications including content, position, and style.
+        output_path (Optional[str]): Optional path to save the output image.
+      Returns:
+        result (dict): Dictionary containing a list of output image paths.
     """
     logger.info(f"[draw_texts] Drawing {len(texts)} texts on {input_path}")
 
