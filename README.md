@@ -3,6 +3,34 @@
 <img src="m3_logo.jpg" alt="M3‑Bench Logo" width="240" />
 </p>
 
+<p>
+  <!-- <a href="https://github.com/EtaYang10th/Open-M3-Bench/graphs/contributors">
+    <img src="https://img.shields.io/github/contributors/EtaYang10th/Open-M3-Bench" alt="Contributors">
+  </a> -->
+  <a href="https://arxiv.org/abs/2511.17729">
+    <img src="https://img.shields.io/badge/arXiv-2511.17729-b31b1b.svg" alt="arXiv">
+  </a>
+  <a href="https://github.com/EtaYang10th/Open-M3-Bench/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/EtaYang10th/Open-M3-Bench" alt="License">
+  </a>
+  <!-- <a href="https://github.com/EtaYang10th/Open-M3-Bench/issues">
+    <img src="https://img.shields.io/github/issues/EtaYang10th/Open-M3-Bench" alt="Issues">
+  </a> -->
+  <!-- <a href="https://github.com/EtaYang10th/Open-M3-Bench/network/members">
+    <img src="https://img.shields.io/github/forks/EtaYang10th/Open-M3-Bench?style=social" alt="Forks"> -->
+  </a>
+  <a href="https://github.com/EtaYang10th/Open-M3-Bench/stargazers">
+    <img src="https://img.shields.io/github/stars/EtaYang10th/Open-M3-Bench?style=social" alt="Stars">
+  </a>
+<!-- </p> <p> -->
+  <a href="https://huggingface.co/papers/2511.17729">
+    <img src="https://img.shields.io/badge/HuggingFace-Paper-orange?logo=huggingface" alt="HF Paper">
+  </a>
+  <a href="https://huggingface.co/datasets/YOUR_ORG_OR_USERNAME/m3-bench-images">
+    <img src="https://img.shields.io/badge/HuggingFace-Dataset-yellow?logo=huggingface" alt="HF Dataset">
+  </a>
+</p>
+
 A lightweight benchmarking and analysis suite around the Model Context Protocol (MCP). It orchestrates multiple MCP servers, drives different LLMs to complete tasks, produces reproducible results, and offers step-wise evaluations and visualizations. 🎯
 
 - Key features ✨:
