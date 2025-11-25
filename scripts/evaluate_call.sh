@@ -8,7 +8,7 @@ set -a
 set +a
 
 source ~/.bashrc
-mamba activate mcp_app
+conda activate mcp_app
 
 # Model list (adjust as needed)
 experiment_names=(

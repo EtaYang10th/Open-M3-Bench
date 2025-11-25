@@ -13,7 +13,7 @@ if [[ -f "$ENV_FILE" ]]; then
 fi
 
 source ~/.bashrc
-mamba activate mcp_app
+conda activate mcp_app
 
 find ./media -mindepth 1 -delete
 

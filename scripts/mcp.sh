@@ -8,7 +8,7 @@ source "$ENV_FILE"
 set +a
 
 source ~/.bashrc
-mamba activate mcp_app
+conda activate mcp_app
 
 
 python "$SCRIPT_DIR/app_mm.py" --MODEL_PATH       gpt-5 \

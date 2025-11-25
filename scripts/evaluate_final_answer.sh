@@ -7,7 +7,7 @@ set +a
 
 
 source ~/.bashrc
-mamba activate mcp_app
+conda activate mcp_app
 
 # Model list for batch evaluation (add/remove as needed)
 experiment_names=(

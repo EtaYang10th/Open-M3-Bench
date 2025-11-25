@@ -3,7 +3,7 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")"/.. >/dev/null 2>&1 && pw
 echo "SCRIPT_DIR: $SCRIPT_DIR"
 
 source ~/.bashrc
-mamba activate mcp_app
+conda activate mcp_app
 
 
 # Model list (add/remove as needed)
