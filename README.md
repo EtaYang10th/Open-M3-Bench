@@ -102,13 +102,19 @@ cp .env_example .env
 - `app_mm.py`: minimal FastAPI multimodal demo (image upload + MCP toolchain).
 - `results/`, `save/`: outputs for evaluations and figures.
 
+## MCP Serves
 MCP tools across servers 🧰:
 
 <img src="mcp_tools_per_server.png" alt="MCP tools per server" width="700" />
 
-> Image assets download: To view all figures and example screenshots locally, download the `images/` folder from our Google Drive and place it at the repository root.
+Test MCP Serves by 
+```bash
+python tools/test_mcp_servers.py
+```
+
+<!-- > Image assets download: To view all figures and example screenshots locally, download the `images/` folder from our Google Drive and place it at the repository root.
 >
-> Download link: [Google Drive folder](https://drive.google.com/drive/folders/1Szrfg-wix29leVqyudTXjz_GqhMyX8vQ?usp=drive_link)
+> Download link: [Google Drive folder](https://drive.google.com/drive/folders/1Szrfg-wix29leVqyudTXjz_GqhMyX8vQ?usp=drive_link) -->
 
 ## Quick Start 🚀
 
