@@ -26,7 +26,7 @@
   <a href="https://huggingface.co/papers/2511.17729">
     <img src="https://img.shields.io/badge/HuggingFace-Paper-orange?logo=huggingface" alt="HF Paper">
   </a>
-  <a href="https://huggingface.co/datasets/Open-M3-Bench/m3-bench-images">
+  <a href="https://huggingface.co/datasets/EtaYang10th/Open-M3-Bench">
     <img src="https://img.shields.io/badge/HuggingFace-Dataset-yellow?logo=huggingface" alt="HF Dataset">
   </a>
 </p>
