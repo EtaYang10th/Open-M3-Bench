@@ -61,6 +61,16 @@ conda activate mcp_app
 # Install deps (adjust per repo files)
 pip install -r requirements_pip.txt
 conda install -r requirements_conda.txt  # if provided
+
+#
+(cd servers/tmdb-mcp-server && npm install && npm run build)
+(cd servers/DINO-X-MCP && npm install && npm run build)
+(cd servers/mcp-server-nationalparks && npm install && npm run build)
+(cd servers/metmuseum-mcp && npm install && npm run build)
+(cd servers/okx-mcp && npm install && npm run build)
+(cd servers/hugeicons && npm install && npm run build)
+(cd servers/math-mcp && npm install && npm run build)
+(cd servers/healthcare-mcp-public && npm install)
 ```
 
 ---

@@ -11,3 +11,24 @@ tools/
 json/
 __pycache__/
 
+# --- Node.js dependencies and build artifacts ---
+**/node_modules/
+**/dist/
+**/build/
+**/coverage/
+npm-debug.log
+yarn-error.log
+pnpm-debug.log
+
+# --- Python artifacts ---
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+.pytest_cache/
+
+# --- System files ---
+.DS_Store
+Thumbs.db
