@@ -1,4 +1,4 @@
-# M3‑Bench 
+# 《$M^3$-Bench: Multi-Modal, Multi-Hop, Multi-Threaded Tool-Using MLLM Agent Benchmark》
 <p align="center">
 <img src="m3_logo.jpg" alt="M3‑Bench Logo" width="240" />
 </p>
