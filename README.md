@@ -71,6 +71,7 @@ conda install -r requirements_conda.txt  # if provided
 (cd servers/hugeicons && npm install && npm run build)
 (cd servers/math-mcp && npm install && npm run build)
 (cd servers/healthcare-mcp-public && npm install)
+(cd servers/nasa-mcp && pip install -e .)
 ```
 
 ---
