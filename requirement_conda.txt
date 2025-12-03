@@ -1,2 +1,2 @@
 bs4==4.14.2
-zbar
+pyzbar
