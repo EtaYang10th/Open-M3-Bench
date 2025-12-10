@@ -99,7 +99,6 @@ cp .env_example .env
 - `models/`: unified drivers for OpenAI/Anthropic/Gemini/xAI/Deepseek/Zhipu/etc.
 - `servers/`: sample MCP servers (weather, wiki, openlibrary, barcode, paper search, ...).
 - `tools/`: utilities for result aggregation and plotting.
-- `mcp_host.py`: manage multiple MCP sessions, discover tools, and route calls.
 - `app_mm.py`: minimal FastAPI multimodal demo (image upload + MCP toolchain).
 - `results/`, `save/`: outputs for evaluations and figures.
 
