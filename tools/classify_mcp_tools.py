@@ -3,10 +3,14 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import re
 import json
+import asyncio
+from contextlib import AsyncExitStack
 from pathlib import Path
 from typing import Dict, Any, Tuple, Optional, List
 
 
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
 from models.model_loader import create_model_driver
 
 
@@ -78,6 +82,106 @@ def _extract_bbox_label(text: str) -> Optional[str]:
   return (m.group(1) or "").strip()
 
 
+def _maybe_abs_path(token: str, base: Path) -> str:
+  """
+  Convert a repo-relative path token to absolute if the target exists.
+  Leave flags (e.g., '-m') and non-existent paths untouched to avoid breaking commands.
+  """
+  if not isinstance(token, str):
+    return token
+  if token.startswith("-") or os.path.isabs(token):
+    return token
+  candidate = base / token
+  return str(candidate) if candidate.exists() else token
+
+
+def _load_json_if_exists(path: Path) -> Dict[str, Any]:
+  if not path.exists():
+    return {}
+  with path.open("r", encoding="utf-8") as f:
+    return json.load(f)
+
+
+async def _list_tools_for_server(server_name: str, scfg: Dict[str, Any], repo_root: Path) -> Dict[str, Dict[str, str]]:
+  """
+  Start one MCP server via stdio, run list_tools, and return {tool: {description}}.
+  """
+  if scfg.get("disabled", False):
+    print(f"[SKIP] {server_name}: disabled in mcp_servers.json")
+    return {}
+
+  command = _maybe_abs_path(scfg.get("command", ""), repo_root)
+  args = [_maybe_abs_path(a, repo_root) for a in scfg.get("args", [])]
+  merged_env = dict(os.environ)
+  merged_env.update(scfg.get("env") or {})
+
+  params = StdioServerParameters(
+    command=command,
+    args=args,
+    env=merged_env,
+    cwd=str(repo_root),
+  )
+
+  async with AsyncExitStack() as stack:
+    stdio = await stack.enter_async_context(stdio_client(params))
+    read, write = stdio
+    session = await stack.enter_async_context(ClientSession(read, write))
+    await session.initialize()
+    resp = await session.list_tools()
+
+  tools: Dict[str, Dict[str, str]] = {}
+  for tool in resp.tools:
+    tools[tool.name] = {"description": tool.description or ""}
+  print(f"[OK] {server_name}: discovered {len(tools)} tools")
+  return tools
+
+
+async def discover_tools(config_path: Path, repo_root: Path) -> Dict[str, Dict[str, Dict[str, str]]]:
+  """
+  Load mcp_servers.json and enumerate tools for each active server.
+  Returns structure: { server: { tool: {description: str} } }
+  """
+  if not config_path.exists():
+    raise FileNotFoundError(f"Missing MCP config: {config_path}")
+
+  cfg = json.loads(config_path.read_text(encoding="utf-8"))
+  servers = cfg.get("servers", {}) or {}
+
+  discovered: Dict[str, Dict[str, Dict[str, str]]] = {}
+  for name, scfg in servers.items():
+    if not isinstance(scfg, dict):
+      continue
+    try:
+      discovered[name] = await _list_tools_for_server(name, scfg, repo_root)
+    except Exception as e:
+      print(f"[WARN] {name}: failed to list tools ({e})")
+  return discovered
+
+
+def merge_catalog(existing: Dict[str, Any], discovered: Dict[str, Dict[str, Dict[str, str]]]) -> Dict[str, Any]:
+  """
+  Merge newly discovered tools into the catalog without overriding prior metadata.
+  - Keep existing entries (including 'catalogry') intact.
+  - Add new servers/tools.
+  - If an existing tool lacks a description, backfill it.
+  """
+  merged = json.loads(json.dumps(existing))  # deep copy to avoid mutating the original
+  for server, tools in (discovered or {}).items():
+    if not isinstance(tools, dict):
+      continue
+    server_bucket = merged.setdefault(server, {})
+    for tool_name, payload in tools.items():
+      if not isinstance(payload, dict):
+        continue
+      if tool_name not in server_bucket:
+        server_bucket[tool_name] = {"description": payload.get("description", "")}
+      else:
+        dest = server_bucket[tool_name]
+        if not dest.get("description"):
+          dest["description"] = payload.get("description", "")
+  return merged
+
+
 def classify_one(driver, tool_full_name: str, description: str, max_retries: int = 3) -> str:
   messages = _build_messages(tool_full_name, description)
   attempt = 0
@@ -99,16 +203,27 @@ def main() -> None:
   # Preload .env (same path as scripts/evaluate_final_answer.sh)
   _load_env_from_file(repo_root / ".env")
 
-  # Target JSON file
+  # Target JSON file (create/merge before classification)
   json_path = repo_root / "save" / "mcp_tools_with_desc.json"
-  if not json_path.exists():
-    raise FileNotFoundError(f"File not found: {json_path}")
+  json_path.parent.mkdir(parents=True, exist_ok=True)
 
-  with json_path.open("r", encoding="utf-8") as f:
-    data: Dict[str, Any] = json.load(f)
+  # Step 1) Discover tools from running each MCP server
+  config_path = repo_root / "mcp_servers.json"
+  discovered = asyncio.run(discover_tools(config_path, repo_root))
 
+  # Step 2) Merge with any existing catalog to preserve prior 'catalogry' labels
+  existing_data = _load_json_if_exists(json_path)
+  data: Dict[str, Any] = merge_catalog(existing_data, discovered)
+  if data != existing_data:
+    with json_path.open("w", encoding="utf-8") as f:
+      json.dump(data, f, ensure_ascii=False, indent=2)
+    print(f"[WRITE] Saved merged catalog to {json_path}")
+  else:
+    print("[INFO] Catalog up to date; no merge changes.")
+
+  # Step 3) Classify only tools missing 'catalogry'
   # Create gpt-5-mini driver (same choice as evaluate_final_answer.sh)
-  driver = create_model_driver("gpt-5-mini", max_new_tokens=10240)
+  driver = create_model_driver("gemini-2.5-flash-lite", max_new_tokens=10240)
 
   updated = False
   # Iterate structure: top-level groups (services), second-level tools with description
