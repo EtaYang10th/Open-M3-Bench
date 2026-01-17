@@ -88,8 +88,8 @@
       "command": "python",
       "args": ["servers/food_nutrition_mcp.py"],
       "env": {
-        "EDAMAM_APP_ID": "3a9bd8a1",
-        "EDAMAM_APP_KEY": "357f43235e782022d5808df950516ed6"
+        "EDAMAM_APP_ID": "",
+        "EDAMAM_APP_KEY": ""
         },
       "disabled": false
     },
@@ -126,9 +126,9 @@
           "command": "python",
           "args": ["servers/reddit_mcp.py"],
           "env": {
-            "REDDIT_CLIENT_ID": "SUu_B8LSrJkuDiUx5tSA7A",
-            "REDDIT_CLIENT_SECRET": "IXO6tkZlrkN3cUGY3GBBZwlf-7KsCQ",
-            "REDDIT_REFRESH_TOKEN": "1674295730841-WI4npHTjK70UpDjQaiSitM63t9QidA"
+            "REDDIT_CLIENT_ID": "",
+            "REDDIT_CLIENT_SECRET": "",
+            "REDDIT_REFRESH_TOKEN": ""
       }
     },
     "excel": {
