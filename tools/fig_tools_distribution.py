@@ -211,6 +211,11 @@ def main():
     catalog_counts = extract_server_tool_counts_from_catalog(catalog_data)
     cat_counts = extract_category_counts(catalog_data)
 
+    # Report totals after generation
+    total_mcp = len(catalog_counts)
+    total_tools = sum(catalog_counts.values())
+    print(f"MCP servers: {total_mcp}, tools: {total_tools}")
+
     # Bar chart with optional inset pie (from category counts)
     plot_tools_per_server_bar(
         catalog_counts,
