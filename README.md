@@ -106,7 +106,7 @@ cp .env_example .env
 ## MCP Serves
 MCP tools across servers 🧰:
 
-<img src="mcp_tools_per_server.png" alt="MCP tools per server" width="700" />
+<img src="mcp_tools_per_server.png" alt="MCP tools per server" width="600" />
 
 Test MCP Serves by 
 ```bash
