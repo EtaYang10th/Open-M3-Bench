@@ -62,7 +62,7 @@ def copy_into_project_media(src_path: str) -> str:
 # Removed type_to_limits: max_step and max_concurrent are passed via CLI
 
 
-async def run_single_task(host: MCPHost, model_driver, task: Dict[str, Any], top_tools: int, max_new_tokens: int, max_step: int, max_concurrent: int, image_base_dir: Optional[Path], fuzzy: bool) -> Dict[str, Any]:
+async def run_single_task(host: MCPHost, model_driver, task: Dict[str, Any], top_tools: int, max_new_tokens: int, max_step: int, max_concurrent: int, image_base_dir: Optional[Path], fuzzy: bool, num_context_tools: int = 0, gt_tools: Optional[List[str]] = None) -> Dict[str, Any]:
 
     question = (task.get("question") if fuzzy else task.get("prompt")) or ""
     image_rel = task.get("image") or ""
@@ -87,7 +87,7 @@ async def run_single_task(host: MCPHost, model_driver, task: Dict[str, Any], top
     history.append({"role": "user", "content": hint})
 
     # Use shared RoundRunner
-    runner = RoundRunner(host=host, model_driver=model_driver, max_step=max_step, max_concurrent=max_concurrent, top_tools=top_tools)
+    runner = RoundRunner(host=host, model_driver=model_driver, max_step=max_step, max_concurrent=max_concurrent, top_tools=top_tools, num_context_tools=num_context_tools, gt_tools=gt_tools)
     rr = await runner.run(history=history, last_user=hint, uploaded_file_paths=[u["file_path"] for u in uploaded_manifest])
     round_groups: List[List[Dict[str, Any]]] = rr.get("round_groups", [])
     dialogues: List[Dict[str, str]] = rr.get("dialogues", [])
@@ -229,6 +229,8 @@ async def main():
     parser.add_argument("--JUDGE_MODEL", required=False)
     parser.add_argument("--OUTPUT_DIR", required=False, help="Directory to write output JSON to, or a filename ending with .json to be created under ./results")
     parser.add_argument("--fuzzy", action="store_true", help="If set, read 'question' instead of 'prompt' from tasks")
+    parser.add_argument("--num_context_tools", type=int, default=0, help="Number of context tools to show (GT + random)")
+    parser.add_argument("--gt_file", required=False, help="Path to GT json file for tool selection")
     args, _ = parser.parse_known_args()
 
     model_path: str = args.MODEL_PATH
@@ -240,6 +242,29 @@ async def main():
     max_step: int = args.max_step
     max_concurrent: int = args.max_concurrent
     num_client: int = max(1, int(args.num_client))
+    num_context_tools: int = args.num_context_tools
+    gt_file_arg: Optional[str] = args.gt_file
+
+    # Load GT map if provided
+    gt_map: Dict[str, List[str]] = {}
+    if gt_file_arg:
+        gt_path = Path(gt_file_arg).resolve()
+        if gt_path.exists():
+            try:
+                data = json.loads(gt_path.read_text(encoding="utf-8"))
+                for t in data:
+                    tid = t.get("id")
+                    tools = set()
+                    if "steps" in t:
+                        for step in t["steps"]:
+                            if "calls" in step:
+                                for call in step["calls"]:
+                                    if "name" in call:
+                                        tools.add(call["name"])
+                    if tid:
+                        gt_map[tid] = list(tools)
+            except Exception as e:
+                print(f"[WARN] Failed to load GT file {gt_path}: {e}")
 
     # Validate judge requirement based on fuzzy flag
     if not args.fuzzy and not judge_model:
@@ -365,6 +390,9 @@ async def main():
                     attempt = 0
                     while True:
                         try:
+                            # Retrieve GT tools for this task
+                            task_gt = gt_map.get(task.get("id"), [])
+                            
                             result = await run_single_task(
                                 host,
                                 model_driver,
@@ -375,6 +403,8 @@ async def main():
                                 max_concurrent=max_concurrent,
                                 image_base_dir=image_dir,
                                 fuzzy=bool(args.fuzzy),
+                                num_context_tools=num_context_tools,
+                                gt_tools=task_gt,
                             )
                             task_id = result.get("id")
 

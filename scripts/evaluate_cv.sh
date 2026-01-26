@@ -1,3 +1,4 @@
+#!/bin/bash
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")"/.. >/dev/null 2>&1 && pwd)"
 echo "SCRIPT_DIR: $SCRIPT_DIR"
@@ -30,10 +31,10 @@ cd "$SCRIPT_DIR"
 # TAU_WEAKS can be:
 # - array: TAU_WEAKS=(0.95 1.0)
 # - single value: TAU_WEAKS=0.6 (or TAU_WEAKS=(0.6))
-TAU_WEAKS=(0.95 1.0)
+TAU_WEAKS=(0.6)
 num_taus="${#TAU_WEAKS[@]}"
-METRICS_FILE="save/step_eval_result.json"
-TEMP_DIR="save/temp_metrics"
+METRICS_FILE="results_cv/step_eval_result.json"
+TEMP_DIR="results_cv/temp_metrics"
 mkdir -p "$TEMP_DIR"
 rm -f "$TEMP_DIR"/*.json
 
@@ -44,10 +45,11 @@ GT_PATH="json/test_mcp_GT.json"
 for tau in "${TAU_WEAKS[@]}"; do
   for experiment_name in "${experiment_names[@]}"; do
     if (( num_taus > 1 )); then
-      OUT_DIR="results/${experiment_name}/tau_${tau}"
+      OUT_DIR="results_cv/${experiment_name}/tau_${tau}"
     else
-      OUT_DIR="results/${experiment_name}"
+      OUT_DIR="results_cv/${experiment_name}"
     fi
+    # Assuming predictions are in the same location as original script
     PRED_PATH="results/${experiment_name}_test_mcp_fuzzy.json"
     TEMP_METRICS_FILE="${TEMP_DIR}/${experiment_name}_tau_${tau}.json"
 
@@ -60,7 +62,7 @@ for tau in "${TAU_WEAKS[@]}"; do
 
     echo "[EVAL START] experiment_name=$experiment_name, tau=$tau"
     
-    python "evaluate_trajectories.py" \
+    python "evaluate_cv_issues.py" \
       --gt "$GT_PATH" \
       --pred "$PRED_PATH" \
       --output-dir "$OUT_DIR" \
@@ -84,5 +86,4 @@ for f in files:
         print(f'Error reading {f}: {e}'); 
 print(json.dumps(data, indent=2))" > "$METRICS_FILE"
 
-echo "Plotting results..."
-python "tools/plot_tau_metrics.py"
+echo "Evaluation complete. Results in $METRICS_FILE"

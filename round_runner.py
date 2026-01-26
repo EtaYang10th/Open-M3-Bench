@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import os, re, json, asyncio, shutil
+import os, re, json, asyncio, shutil, random
 from pathlib import Path
 from typing import Any, Dict, List, Tuple, Optional
 
@@ -101,17 +101,26 @@ class RoundRunner:
         max_step: int,
         max_concurrent: int,
         top_tools: int = 4,
+        num_context_tools: int = 0,
+        gt_tools: Optional[List[str]] = None,
     ) -> None:
         self.host = host
         self.model_driver = model_driver
         self.max_step = max(1, int(max_step))
         self.max_concurrent = max(1, int(max_concurrent))
         self.top_tools = max(1, int(top_tools))
+        self.num_context_tools = num_context_tools
+        self.gt_tools = gt_tools or []
 
-    def _list_all_tool_descriptions(self) -> List[str]:
+    def _list_all_tool_descriptions(self, tool_names: Optional[List[str]] = None) -> List[str]:
         lines: List[str] = []
-        for qn, (_server, _tname, desc, _schema) in self.host.tools.items():
-            lines.append(f"{qn}: {desc}")
+        # If tool_names is provided, use it; otherwise use all
+        target_tools = tool_names if tool_names is not None else self.host.tools.keys()
+        
+        for qn in target_tools:
+            if qn in self.host.tools:
+                _server, _tname, desc, _schema = self.host.tools[qn]
+                lines.append(f"{qn}: {desc}")
         return lines
 
     def _describe_selected(self, tool_names: List[str]) -> List[str]:
@@ -154,7 +163,29 @@ class RoundRunner:
         uploaded_file_paths: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
         image_paths = to_image_paths(uploaded_file_paths)
+        
+        # --- Tool Selection Logic ---
         all_tool_names = list(self.host.tools.keys())
+        context_tool_names = all_tool_names
+        
+        if self.num_context_tools > 0:
+            # If we have GT tools, start with them
+            selected_set = set()
+            # Filter GT tools that actually exist in host.tools
+            valid_gt = [t for t in self.gt_tools if t in self.host.tools]
+            selected_set.update(valid_gt)
+            
+            # Fill the rest with random tools
+            needed = self.num_context_tools - len(selected_set)
+            if needed > 0:
+                candidates = [t for t in all_tool_names if t not in selected_set]
+                if len(candidates) <= needed:
+                    selected_set.update(candidates)
+                else:
+                    selected_set.update(random.sample(candidates, needed))
+            
+            context_tool_names = list(selected_set)
+        # -----------------------------
 
         round_groups: List[List[Dict[str, Any]]] = []
         dialogues: List[Dict[str, str]] = []
@@ -162,7 +193,7 @@ class RoundRunner:
 
         for i in range(1, self.max_step + 1):
             # ---------------- Prepare Stage ----------------
-            tool_lines = self._list_all_tool_descriptions()
+            tool_lines = self._list_all_tool_descriptions(context_tool_names)
             with open("tool_lines.txt", "w") as f:
                 f.write("\n".join(tool_lines))
             prepare_system = "".join((
@@ -184,11 +215,20 @@ class RoundRunner:
             )
 
             prep_visible = strip_think(prep_visible)
-            selected_tools = extract_selected_tools(prep_visible, all_tool_names)
+            selected_tools = extract_selected_tools(prep_visible, context_tool_names)
             if not selected_tools:
                 if prep_visible:
                     selected_tools = prep_visible
                 else:
+                    # Fallback to lexical search on CONTEXT tools (or all? keep consistent with context)
+                    # host.select_tools_for uses all tools. 
+                    # If the model didn't select from context, maybe we should restrict fallback to context too?
+                    # For now, let's keep original behavior but maybe it should also be restricted?
+                    # The prompt only showed context tools. So model should pick from them.
+                    # If we use host.select_tools_for, it might pick outside context.
+                    # But the user wants to limit what model sees.
+                    # If model fails to select, we can use select_tools_for but should we filter?
+                    # Let's trust select_tools_for for now as fallback.
                     selected_tools = self.host.select_tools_for(last_user, k=self.top_tools)
 
             # ---------------- Work Stage ----------------

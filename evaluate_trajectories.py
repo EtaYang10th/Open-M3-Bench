@@ -667,8 +667,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument("--model", default="sentence-transformers/all-MiniLM-L6-v2", help="SentenceTransformer model name")
     parser.add_argument("--tau-strong", type=float, default=0.80, help="Strong similarity threshold")
     parser.add_argument("--tau-weak", type=float, default=0.60, help="Weak similarity threshold")
+    parser.add_argument("--experiment-name", help="Name of the experiment/model")
+    parser.add_argument("--save-metrics-to", help="Path to JSON file to append metrics")
 
     args = parser.parse_args(argv)
+    print(f"DEBUG: args={args}")
 
     gt_raw = read_json_any(args.gt)
     pred_raw = read_json_any(args.pred)
@@ -753,6 +756,38 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         json.dump(out_json_obj, f, ensure_ascii=False, indent=2)
 
     write_csv(out_csv_path, per_id_results)
+
+    if args.save_metrics_to and args.experiment_name:
+        metrics_entry = {
+            "Model": args.experiment_name,
+            "tau_weak": args.tau_weak,
+            "Recall": aggregate.get("recall", 0.0),
+            "Precision": aggregate.get("precision", 0.0),
+            "Argument Similarity": aggregate.get("avg_sim_all_cov", 0.0),
+            "Step Coherence": aggregate.get("step_coherence_cov", 0.0),
+            "Order Consistency": aggregate.get("order_consistency_cov", 0.0),
+            "Merge Purity": aggregate.get("merge_purity_cov", 0.0)
+        }
+        
+        existing_data = []
+        if os.path.exists(args.save_metrics_to):
+            try:
+                with open(args.save_metrics_to, "r", encoding="utf-8") as f:
+                    content = f.read()
+                    if content.strip():
+                        existing_data = json.loads(content)
+                        if not isinstance(existing_data, list):
+                            existing_data = [] 
+            except Exception as e:
+                print(f"DEBUG: Error reading existing metrics: {e}")
+                existing_data = []
+        
+        print(f"DEBUG: Saving metrics to {args.save_metrics_to}. Existing entries: {len(existing_data)}")
+        existing_data.append(metrics_entry)
+        
+        os.makedirs(os.path.dirname(args.save_metrics_to), exist_ok=True)
+        with open(args.save_metrics_to, "w", encoding="utf-8") as f:
+            json.dump(existing_data, f, indent=2)
 
     # Build strong/weak/unmatched outputs using per-id details and original maps
     strong_matches: List[Dict[str, Any]] = []
@@ -877,17 +912,17 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     order_top = sorted(((typ, _avg("orderc_cov", s)) for typ, s in type_acc.items()), key=lambda x: x[1])
     merge_top = sorted(((typ, _avg("mergep_cov", s)) for typ, s in type_acc.items()), key=lambda x: x[1])
 
-    lines.append("")
-    n = 10
-    lines.append(f"{'Top N Types - Step Coherence':<{label_width}} :")
-    for typ, val in coh_top[:n]:
-        lines.append(f"  {typ:<{label_width - 2}} : {val * 100:6.2f}%")
-    lines.append(f"{'Top N Types - Order Consistency':<{label_width}} :")
-    for typ, val in order_top[:n]:
-        lines.append(f"  {typ:<{label_width - 2}} : {val * 100:6.2f}%")
-    lines.append(f"{'Top N Types - Merge Purity':<{label_width}} :")
-    for typ, val in merge_top[:n]:
-        lines.append(f"  {typ:<{label_width - 2}} : {val * 100:6.2f}%")
+    # lines.append("")
+    # n = 10
+    # lines.append(f"{'Top N Types - Step Coherence':<{label_width}} :")
+    # for typ, val in coh_top[:n]:
+    #     lines.append(f"  {typ:<{label_width - 2}} : {val * 100:6.2f}%")
+    # lines.append(f"{'Top N Types - Order Consistency':<{label_width}} :")
+    # for typ, val in order_top[:n]:
+    #     lines.append(f"  {typ:<{label_width - 2}} : {val * 100:6.2f}%")
+    # lines.append(f"{'Top N Types - Merge Purity':<{label_width}} :")
+    # for typ, val in merge_top[:n]:
+    #     lines.append(f"  {typ:<{label_width - 2}} : {val * 100:6.2f}%")
 
     # Type-level Recall and Precision (sorted descending)
     type_stats: Dict[str, Dict[str, float]] = {}

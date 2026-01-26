@@ -44,6 +44,7 @@ A lightweight benchmarking and analysis suite around the Model Context Protocol 
 ## Changelog 📝
 
 - 2025-11-20: Initial public release of M3‑Bench.
+- 2026-1-26: Added optional support for the total number of tools, and added three new CV-related test metrics.
 
 ---
 

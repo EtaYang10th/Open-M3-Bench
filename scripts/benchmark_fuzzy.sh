@@ -21,20 +21,20 @@ find ./media -mindepth 1 -delete
 
 # Model list for batch benchmarking (add/remove as needed)
 experiment_names=(
-  "gemini-2.5-flash"
-  "claude-haiku-4-5"
-  "claude-sonnet-4-5"
-  "gemini-2.5-pro"
-  "meta-llama/Llama-4-Scout-17B-16E-Instruct"
-  "internvl3.5-latest"
-  "glm-4.5v"
-  "gpt-5"
-  "gpt-5-nano"
-  "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8"
+  # "gemini-2.5-flash"
+  # "claude-haiku-4-5"
+  # "claude-sonnet-4-5"
+  # "gemini-2.5-pro"
+  # "meta-llama/Llama-4-Scout-17B-16E-Instruct"
+  # "internvl3.5-latest"
+  # "glm-4.5v"
+  # "gpt-5"
+  # "gpt-5-nano"
+  # "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8"
   "gemini-2.5-flash-lite"
-  "grok-4-fast-reasoning"
-  "grok-4-0709"
-  "Qwen/Qwen2.5-VL-72B-Instruct"
+  # "grok-4-fast-reasoning"
+  # "grok-4-0709"
+  # "Qwen/Qwen2.5-VL-72B-Instruct"
 )
 
 for experiment_name in "${experiment_names[@]}"; do
@@ -48,7 +48,7 @@ for experiment_name in "${experiment_names[@]}"; do
           --max_concurrent 10 \
           --num_client 5 \
           --max_new_tokens 32768 \
-          --image_dir "$SCRIPT_DIR/datasets" \
+          --image_dir "/common/users/yz1403/Projects/Datasets/LLM-MCP" \
           --annotation_dir "$SCRIPT_DIR/json/tasks_fuzzy.json" \
           --OUTPUT_DIR ${base_model_name}_test_mcp_fuzzy.json \
           --fuzzy

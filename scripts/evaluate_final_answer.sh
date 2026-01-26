@@ -31,8 +31,6 @@ experiment_names=(
 GT_PATH="$SCRIPT_DIR/json/test_mcp_GT.json"
 
 
-
-
 JUDGE_MODELS_CSV="gpt-5-mini,gemini-2.5-flash,deepseek-chat,grok-4-fast-reasoning"
 
 # Iterate model list and evaluate sequentially

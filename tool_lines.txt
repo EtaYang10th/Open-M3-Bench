@@ -1,0 +1,1641 @@
+weather/get_weather: 
+      Get current weather for a U.S. location using Open‑Meteo with ZIP/city geocoding.
+      Args:
+        location (str): City/state name or a 5‑digit U.S. ZIP code.
+        units (Literal["us","metric"]): "us" for imperial units or "metric" for SI units.
+      Returns:
+        result (str): Plain-text sentence summarizing temperature, wind, code, and place name.
+    
+wiki/search: 
+      Search Wikipedia for pages matching a query and return top titles.
+      Args:
+        query (str): Free-text search query.
+        n (int): Number of results to include (1–10).
+      Returns:
+        result (str): Plain-text list of up to n titles or a no-results message.
+    
+wiki/summary: 
+      Fetch a short Wikipedia summary for the given page title.
+      Args:
+        title (str): Exact or redirectable page title.
+      Returns:
+        result (str): Plain-text block with title, short description, and extract.
+    
+ocr/perform_ocr: Perform OCR on the provided input.
+    
+    Args:
+        input_data: Can be one of:
+            - File path to an image
+            - URL to an image
+            - Raw image bytes
+        language: Tesseract language code (default: "eng")
+        config: Tesseract configuration options (default: "--oem 3 --psm 6")
+        
+    Returns:
+        Extracted text from the image
+        
+    Usage:
+        perform_ocr("/path/to/image.jpg")
+        perform_ocr("https://example.com/image.jpg")
+        perform_ocr(image_bytes)
+    
+ocr/get_supported_languages: Get list of supported OCR languages.
+    
+    Returns:
+        List of supported language codes
+        
+    Usage:
+        get_supported_languages()
+    
+amazon/search_products: 
+      Search Amazon products via Rainforest API and return a concise plain-text list.
+      Args:
+        keywords (str): Product search keywords.
+        n (int): Number of results to include (1–10).
+        page (int): Result page index starting from 1.
+        amazon_domain (str): Amazon domain such as "amazon.com".
+      Returns:
+        result (str): Plain-text list of up to n products or an error message.
+    
+amazon/get_product: 
+      Retrieve product details for a specific Amazon ASIN via Rainforest API.
+      Args:
+        asin (str): Amazon Standard Identification Number.
+        amazon_domain (str): Amazon domain such as "amazon.com".
+      Returns:
+        result (str): Plain-text block with title, URLs, price, features, or an error message.
+    
+google-maps/geocode: 
+      Forward geocode a human-readable address using Google Geocoding API.
+      Args:
+        address (str): Free-text address to geocode.
+        region (Optional[str]): Region bias such as "us".
+        language (Optional[str]): Response language code such as "en".
+      Returns:
+        data (Dict[str, Any]): JSON with endpoint, request parameters, and API response.
+    
+google-maps/reverse_geocode: 
+      Reverse geocode coordinates into addresses using Google Geocoding API.
+      Args:
+        lat (float): Latitude of the location.
+        lng (float): Longitude of the location.
+        language (Optional[str]): Response language code such as "en".
+      Returns:
+        data (Dict[str, Any]): JSON with endpoint, request parameters, and API response.
+    
+google-maps/places_text_search: 
+      Search for places using a free-text query via Google Places Text Search.
+      Args:
+        query (str): Text query describing the place.
+        languageCode (Optional[str]): Response language code.
+        regionCode (Optional[str]): Region bias code.
+        locationBias (Optional[Dict[str, Any]]): Optional circle bias for location preference.
+        maxResultCount (int): Maximum number of results to keep client-side.
+        fields (Optional[str]): Unused field mask parameter for signature parity.
+      Returns:
+        data (Dict[str, Any]): JSON with endpoint, request parameters, and trimmed Places response.
+    
+google-maps/places_nearby_search: 
+      Search nearby places using Places API (New) v1.
+      Args:
+        location (Dict[str, float]): Latitude and longitude dictionary.
+        radiusMeters (int): Search radius in meters.
+        includedTypes (Optional[List[str]]): Optional place type filters.
+        languageCode (Optional[str]): Response language code.
+        regionCode (Optional[str]): Region bias.
+        fields (Optional[str]): Optional field mask override for response.
+      Returns:
+        data (Dict[str, Any]): JSON with endpoint, field mask, request body, and API response.
+    
+google-maps/place_details: 
+      Fetch place details by place ID using Places API (New) v1.
+      Args:
+        place_id (str): Google Place ID.
+        fields (Optional[str]): Optional field mask override.
+      Returns:
+        data (Dict[str, Any]): JSON with endpoint, field mask, and place details response.
+    
+google-maps/place_photo_media: 
+      Download a place photo asset and return it wrapped as a data URL or JSON.
+      Args:
+        photo_resource (str): Places photo resource path.
+        maxWidthPx (Optional[int]): Optional maximum image width in pixels.
+        maxHeightPx (Optional[int]): Optional maximum image height in pixels.
+      Returns:
+        data (Dict[str, Any]): JSON with endpoint, query parameters, and photo response.
+    
+google-maps/compute_route: 
+      Compute a route between origin and destination using Routes API v2.
+      Args:
+        origin (Dict[str, Any]): Origin location using placeId or latLng structure.
+        destination (Dict[str, Any]): Destination location using placeId or latLng.
+        travelMode (str): Travel mode such as DRIVE or WALK.
+        routingPreference (Optional[str]): Optional routing preference.
+        avoidTolls (Optional[bool]): Whether to avoid toll roads.
+        optimizeWaypointOrder (Optional[bool]): Whether to optimize waypoint order.
+        intermediates (Optional[List[Dict[str, Any]]]): Optional waypoints.
+        fields (Optional[str]): Optional field mask override for response.
+      Returns:
+        data (Dict[str, Any]): JSON with endpoint, field mask, request body, and route response.
+    
+google-maps/directions_legacy: 
+      Get directions between two locations using the legacy Directions API.
+      Args:
+        origin (str): Origin address or "lat,lng" string.
+        destination (str): Destination address or "lat,lng" string.
+        mode (str): Travel mode string such as "driving".
+        waypoints (Optional[List[str]]): Optional waypoint addresses.
+        departure_time (Optional[str]): Optional departure time parameter.
+      Returns:
+        data (Dict[str, Any]): JSON with endpoint, request parameters, and directions response.
+    
+google-maps/distance_matrix: 
+      Compute travel times and distances using the legacy Distance Matrix API.
+      Args:
+        origins (List[str]): Origin addresses or "lat,lng" strings.
+        destinations (List[str]): Destination addresses or "lat,lng" strings.
+        mode (str): Travel mode such as "driving".
+        departure_time (Optional[str]): Optional departure time parameter.
+      Returns:
+        data (Dict[str, Any]): JSON with endpoint, request parameters, and matrix response.
+    
+google-maps/timezone: 
+      Retrieve time zone information for a coordinate using the Time Zone API.
+      Args:
+        lat (float): Latitude of the location.
+        lng (float): Longitude of the location.
+        timestamp (Optional[int]): Unix epoch seconds for DST calculation.
+      Returns:
+        data (Dict[str, Any]): JSON with endpoint, request parameters, and time zone response.
+    
+google-maps/elevation_by_locations: 
+      Retrieve elevation for one or more discrete locations.
+      Args:
+        locations (List[str]): Coordinate strings such as "lat,lng".
+      Returns:
+        data (Dict[str, Any]): JSON with endpoint, request parameters, and elevation results.
+    
+google-maps/elevation_along_path: 
+      Retrieve elevation sampled along a path.
+      Args:
+        path (List[str]): Path coordinates as "lat,lng" strings.
+        samples (int): Number of evenly spaced samples to return.
+      Returns:
+        data (Dict[str, Any]): JSON with endpoint, request parameters, and elevation samples.
+    
+google-maps/roads_snap_to_roads: 
+      Snap GPS points to the road network using the Roads API.
+      Args:
+        path (List[str]): Coordinate strings such as "lat,lng".
+        interpolate (bool): Whether to add interpolated points along the road.
+      Returns:
+        data (Dict[str, Any]): JSON with endpoint, request parameters, and snapped points.
+    
+google-maps/roads_nearest_roads: 
+      Find nearest road segments for input points using the Roads API.
+      Args:
+        points (List[str]): Coordinate strings such as "lat,lng".
+      Returns:
+        data (Dict[str, Any]): JSON with endpoint, request parameters, and snapped road segments.
+    
+google-maps/roads_speed_limits: 
+      Retrieve posted speed limits along road segments by place IDs or path.
+      Args:
+        placeIds (Optional[List[str]]): One or more road segment place IDs.
+        path (Optional[List[str]]): Coordinate path strings as an alternative to placeIds.
+        units (str): Speed units "KPH" or "MPH".
+      Returns:
+        data (Dict[str, Any]): JSON with endpoint, request parameters, and speed limit results.
+    
+google-maps/geolocate_home: 
+      Estimate device location from cell tower, Wi‑Fi, and IP signals using Geolocation API.
+      Args:
+        cellTowers (Optional[List[Dict[str, Any]]]): Optional list of cell tower observations.
+        wifiAccessPoints (Optional[List[Dict[str, Any]]]): Optional list of Wi‑Fi access point observations.
+        considerIp (bool): Whether to allow IP-based fallback geolocation.
+      Returns:
+        data (Dict[str, Any]): JSON with endpoint, request body, and geolocation result.
+    
+google-maps/ping: 
+      Perform a basic health check of the Google Maps MCP server.
+      Args:
+      Returns:
+        data (Dict[str, Any]): JSON with ok flag and list of enabled service names.
+    
+google-maps/static_map: 
+      Build a ready-to-use Google Static Maps image URL without making the HTTP request.
+      Args:
+        center (Optional[str]): Map center as address or "lat,lng".
+        zoom (Optional[int]): Map zoom level.
+        size (str): Image size string such as "640x640".
+        markers (Optional[List[str]]): Optional marker parameter strings.
+        path (Optional[str]): Optional path parameter string.
+        scale (int): Scale factor for higher resolution.
+        maptype (str): Map type such as "roadmap".
+      Returns:
+        data (Dict[str, Any]): Dictionary containing the generated image_url.
+    
+google-maps/street_view_image: 
+      Build a ready-to-use Street View Static image URL.
+      Args:
+        location (str): Address or "lat,lng" of the panorama location.
+        size (str): Image size string such as "640x640".
+        heading (Optional[int]): Optional camera heading.
+        pitch (Optional[int]): Optional camera pitch.
+        fov (Optional[int]): Optional field of view.
+      Returns:
+        data (Dict[str, Any]): Dictionary containing the generated image_url.
+    
+tmdb/search_movies:   Search for movies using The Movie Database API.
+  Args:
+    query (string): Search query text.
+    year (number): Optional filter by release year.
+    page (number): Optional page number, defaults to 1.
+  Returns:
+    result (text): JSON string of the TMDB /search/movie response.
+pyzbar-mcp/scan_barcode: 
+      Scan barcodes and QR codes in an image and return decoded values with bounding boxes.
+      Args:
+        image_paths (list[str] | str): Single image path or list where the first path is used.
+      Returns:
+        result (str): JSON string summarizing detections, metadata results, or error information.
+    
+openlibrary_mcp/get_book_info: 
+      Look up book metadata from OpenLibrary by ISBN or title with optional author filter.
+      Args:
+        isbn (Optional[str]): Book ISBN-10 or ISBN-13, preferred when available.
+        title (Optional[str]): Book title used for text search when ISBN is not provided.
+        author (Optional[str]): Author name to narrow title-based search.
+      Returns:
+        result (dict): Sanitized dictionary with core book metadata, messages, or error details.
+    
+imagesorcery-mcp/crop: 
+      Crop an image to a rectangular region using OpenCV.
+      Args:
+        input_path (str): Full path to the input image file.
+        x1 (int): X-coordinate of the top-left corner.
+        y1 (int): Y-coordinate of the top-left corner.
+        x2 (int): X-coordinate of the bottom-right corner.
+        y2 (int): Y-coordinate of the bottom-right corner.
+        output_path (Optional[str]): Optional path to save the cropped image.
+      Returns:
+        result (dict): Dictionary containing a list of output image paths.
+    
+imagesorcery-mcp/blur: 
+      Blur specified rectangular or polygonal areas of an image.
+      Args:
+        input_path (str): Full path to the input image file.
+        areas (List[Dict[str, Any]]): List of regions to blur, by box or polygon.
+        invert_areas (bool): Whether to blur everything except the specified areas.
+        output_path (Optional[str]): Optional path to save the blurred image.
+      Returns:
+        result (dict): Dictionary containing a list of output image paths.
+    
+imagesorcery-mcp/draw_arrows: 
+      Draw one or more arrows on an image.
+      Args:
+        input_path (str): Full path to the input image file.
+        arrows (List[Dict[str, Any]]): Arrow specifications including endpoints and style.
+        output_path (Optional[str]): Optional path to save the output image.
+      Returns:
+        result (dict): Dictionary containing a list of output image paths.
+    
+imagesorcery-mcp/change_color: 
+      Change the color palette of an image to grayscale or sepia.
+      Args:
+        input_path (str): Full path to the input image file.
+        palette (Literal["grayscale","sepia"]): Target color style.
+        output_path (Optional[str]): Optional path to save the converted image.
+      Returns:
+        result (dict): Dictionary containing a list of output image paths.
+    
+imagesorcery-mcp/draw_circles: 
+      Draw one or more circles on an image using circle definitions.
+      Args:
+        input_path (str): Full path to the input image file.
+        circles (List[CircleItem]): List of circle items with center, radius, color, and style.
+        output_path (Optional[str]): Optional path to save the result image.
+      Returns:
+        result (dict): Dictionary containing a list of output image paths.
+    
+imagesorcery-mcp/draw_lines: 
+      Draw one or more straight lines on an image.
+      Args:
+        input_path (str): Full path to the input image file.
+        lines (List[Dict[str, Any]]): Line specifications including endpoints and style.
+        output_path (Optional[str]): Optional path to save the output image.
+      Returns:
+        result (dict): Dictionary containing a list of output image paths.
+    
+imagesorcery-mcp/draw_texts: 
+      Draw one or more text labels on an image.
+      Args:
+        input_path (str): Full path to the input image file.
+        texts (List[Dict[str, Any]]): Text specifications including content, position, and style.
+        output_path (Optional[str]): Optional path to save the output image.
+      Returns:
+        result (dict): Dictionary containing a list of output image paths.
+    
+healthcare-mcp/fda_drug_lookup:   Look up FDA drug information by name.
+  Args:
+    drug_name (string): Drug name to search.
+    search_type (string): Information type: general, label, or adverse_events.
+  Returns:
+    result (object): JSON object with status, search parameters, and drug records.
+healthcare-mcp/pubmed_search:   Search medical literature in PubMed.
+  Args:
+    query (string): Search query text.
+    max_results (number): Maximum number of results to return.
+    date_range (string): Optional year-window filter.
+    open_access (boolean): Whether to filter for open access only.
+  Returns:
+    result (object): JSON object with status, query parameters, and article records.
+healthcare-mcp/medrxiv_search:   Search preprint articles on medRxiv.
+  Args:
+    query (string): Search query text.
+    max_results (number): Maximum number of results to return.
+  Returns:
+    result (object): JSON object with status, query parameters, and article records.
+healthcare-mcp/calculate_bmi:   Calculate Body Mass Index (BMI).
+  Args:
+    height_meters (number): Height in meters.
+    weight_kg (number): Weight in kilograms.
+  Returns:
+    result (object): JSON object with status and BMI value.
+healthcare-mcp/ncbi_bookshelf_search:   Search books and chapters in the NCBI Bookshelf.
+  Args:
+    query (string): Search query text.
+    max_results (number): Maximum number of results to return.
+  Returns:
+    result (object): JSON object with status, query parameters, and book records.
+healthcare-mcp/extract_dicom_metadata:   Extract key metadata from a local DICOM file.
+  Args:
+    file_path (string): Local filesystem path to the DICOM file.
+  Returns:
+    result (object): JSON object with status and selected DICOM metadata fields.
+healthcare-mcp/health_topics:   Get evidence-based health topic summaries from Health.gov.
+  Args:
+    topic (string): Health topic search term.
+    language (string): Result language code, en or es.
+  Returns:
+    result (object): JSON object with status, topic, language, and topic entries.
+healthcare-mcp/clinical_trials_search:   Search clinical study records from ClinicalTrials.gov.
+  Args:
+    condition (string): Condition or disease name to search.
+    status (string): Trial status filter such as recruiting or completed.
+    max_results (number): Maximum number of trials to return.
+  Returns:
+    result (object): JSON object with status, query parameters, and trial records.
+healthcare-mcp/lookup_icd_code:   Look up ICD-10 diagnosis codes and descriptions.
+  Args:
+    code (string): ICD-10 code to look up (optional if description is provided).
+    description (string): Condition description to search (optional if code is provided).
+    max_results (number): Maximum number of code records to return.
+  Returns:
+    result (object): JSON object with status, search parameters, and code records.
+healthcare-mcp/get_usage_stats:   Get usage statistics for the current MCP session.
+  Args:
+    (none): This tool takes no input arguments.
+  Returns:
+    result (object): JSON object with session ID, start time, and tool call counts.
+healthcare-mcp/get_all_usage_stats:   Get aggregated usage statistics across all sessions.
+  Args:
+    (none): This tool takes no input arguments.
+  Returns:
+    result (object): JSON object with overall usage statistics by session and tool.
+food_nutrition_mcp/get_nutrition: 
+      Get nutritional information for a described food item using Edamam APIs.
+      Args:
+        query (Optional[str]): Food name with quantity description.
+        food (Optional[str]): Alias for query when provided instead.
+      Returns:
+        result (str): Summary of key nutrients and units or an error message.
+    
+dinox-mcp/detect-objects-by-text: Detect objects in an image using a text prompt as categories.
+
+  Args:
+    imageFileUri (string): Local image file path or file:// URI.
+    textPrompt (string): Period-separated English noun categories.
+    includeDescription (boolean): Whether to include a text description per detected object.
+
+  Returns:
+    text (string): Summary of matched categories, counts, and JSON details.
+dinox-mcp/detect-all-objects: Analyze an image and detect all objects.
+
+  Args:
+    imageFileUri (string): Local image file path or file:// URI.
+    includeDescription (boolean): Whether to include a text description per object.
+
+  Returns:
+    text (string): Summary of object categories, counts, and JSON details.
+dinox-mcp/detect-human-pose-keypoints: Detect human pose keypoints and bounding boxes in an image.
+
+  Args:
+    imageFileUri (string): Local image file path or file:// URI.
+    includeDescription (boolean): Whether to include a text description per person.
+
+  Returns:
+    text (string): Count of persons and JSON pose details per person.
+dinox-mcp/visualize-detection-result: Render detection results onto an image with boxes and labels.
+
+  Args:
+    imageFileUri (string): Local image file path or file:// URI.
+    detections (array): Object detection results with names and bounding boxes.
+    fontSize (number, optional): Label font size.
+    boxThickness (number, optional): Bounding box line thickness.
+    showLabels (boolean, optional): Whether to draw category labels.
+
+  Returns:
+    text (string): File path of the saved visualized image.
+linkimage-mcp/fetch_unsplash_image: 
+      Download the main image from an Unsplash photo page using the official API.
+      Args:
+        url (str): Full Unsplash photo URL for the target image.
+      Returns:
+        result (str): JSON string describing download status, image URL, author, and saved path.
+    
+google-air/current_conditions: 
+      Retrieve current air-quality conditions at a specific latitude and longitude.
+      Args:
+        lat (float): Latitude of the location.
+        lng (float): Longitude of the location.
+      Returns:
+        data (Dict[str, Any]): JSON payload from Google Air Quality API with AQI and pollutants.
+    
+google-air/forecast: 
+      Retrieve air-quality forecasts for a location for a configurable number of hours.
+      Args:
+        lat (float): Latitude of the forecast location.
+        lng (float): Longitude of the forecast location.
+        hours (Optional[int]): Number of forecast hours to request (1–96).
+      Returns:
+        data (Dict[str, Any]): JSON payload with forecasted pollutant levels and AQI indexes.
+    
+google-air/history: 
+      Retrieve historical air-quality records for a location over a time range.
+      Args:
+        lat (float): Latitude of the query location.
+        lng (float): Longitude of the query location.
+        startTime (str): Start time in ISO-8601 format.
+        endTime (str): End time in ISO-8601 format.
+      Returns:
+        data (Dict[str, Any]): JSON with past AQI and pollutant data for the interval.
+    
+google-air/heatmap_tile: 
+      Retrieve a heat-map tile representing air-quality levels for a map tile coordinate.
+      Args:
+        z (int): Zoom level of the map tile.
+        x (int): Tile X coordinate.
+        y (int): Tile Y coordinate.
+        indexType (str): AQI index type to visualize.
+      Returns:
+        data (Dict[str, Any]): JSON with tile metadata or encoded image data.
+    
+ppt/create_presentation: 
+        Create a new empty PowerPoint presentation.
+
+        Args:
+            id: Optional presentation identifier; auto-generated if omitted.
+
+        Returns:
+            Dict: Presentation ID, status message, and initial slide count.
+        
+ppt/create_presentation_from_template: 
+        Create a new presentation from a template file.
+
+        Args:
+            template_path: Path or filename for a .pptx/.potx template.
+            id: Optional presentation identifier; auto-generated if omitted.
+
+        Returns:
+            Dict: Presentation ID, resolved template path, slide count, or an error.
+        
+ppt/open_presentation: 
+        Open an existing PowerPoint presentation from disk.
+
+        Args:
+            file_path: Absolute or relative .pptx path.
+            id: Optional presentation identifier; auto-generated if omitted.
+
+        Returns:
+            Dict: Presentation ID, slide count, and status or an error.
+        
+ppt/save_presentation: 
+        Save a presentation to a file.
+
+        Args:
+            file_path: Destination .pptx path (relative paths use configured output dir).
+            presentation_id: Target presentation identifier; defaults to current.
+
+        Returns:
+            Dict: Saved path, file URI, and status or an error.
+        
+ppt/get_presentation_info: 
+        Get basic metadata and layout information for a presentation.
+
+        Args:
+            presentation_id: Target presentation identifier; defaults to current.
+
+        Returns:
+            Dict: Presentation ID, counts, and layout details or an error.
+        
+ppt/get_template_file_info: 
+        Get layout and property information for a template file.
+
+        Args:
+            template_path: Template path or filename; searched in configured directories if needed.
+
+        Returns:
+            Dict: Template layouts, counts, and properties or an error.
+        
+ppt/set_core_properties: 
+        Set core document properties on a presentation.
+
+        Args:
+            title: Document title.
+            subject: Document subject.
+            author: Author name.
+            keywords: Comma-separated keywords.
+            comments: Free-form comments/notes.
+            presentation_id: Target presentation identifier; defaults to current.
+
+        Returns:
+            Dict: Status message or an error.
+        
+ppt/add_slide: 
+        Add a new slide to the presentation with optional background styling.
+
+        Args:
+            layout_index: Index in `pres.slide_layouts` to use.
+            title: Optional title to set on the slide if layout supports it.
+            background_type: One of "solid", "gradient", or "professional_gradient".
+            background_colors: For gradient backgrounds, [[r,g,b],[r,g,b]].
+            gradient_direction: Gradient direction, e.g., "horizontal" or "diagonal".
+            color_scheme: Professional color scheme for professional gradient backgrounds.
+            presentation_id: Target presentation ID. Defaults to current presentation.
+
+        Returns:
+            Dict: {
+              "message": str, "slide_index": int, "layout_name": str
+            } or {"error": str}
+        
+ppt/get_slide_info: 
+        Get information about a specific slide.
+
+        Args:
+            slide_index: Slide index (0-based).
+            presentation_id: Target presentation ID. Defaults to current presentation.
+
+        Returns:
+            Dict: Slide metadata including shapes, placeholders, and layout; or {"error": str}
+        
+ppt/extract_slide_text: 
+        Extract all text content from a specific slide.
+
+        Args:
+            slide_index: Slide index (0-based).
+            presentation_id: Target presentation ID. Defaults to current presentation.
+
+        Returns:
+            Dict: {
+              "success": bool,
+              "slide_index": int,
+              "text_content": { ... },
+              "total_text_shapes": int,
+              "has_title": bool,
+              "has_tables": bool
+            } or {"error": str}
+        
+ppt/extract_presentation_text: 
+        Extract all text content from all slides in the presentation.
+
+        Args:
+            presentation_id: Target presentation ID. Defaults to current presentation.
+            include_slide_info: Whether to include per-slide metadata in the output.
+
+        Returns:
+            Dict: Summary stats and per-slide text content, plus a combined text field; or {"error": str}
+        
+ppt/populate_placeholder: 
+        Populate a placeholder with text.
+
+        Args:
+            slide_index: Slide index (0-based).
+            placeholder_idx: Placeholder index (layout-defined).
+            text: Text content to insert.
+            presentation_id: Target presentation ID. Defaults to current presentation.
+
+        Returns:
+            Dict: {"message": str} or {"error": str}
+        
+ppt/add_bullet_points: 
+        Add bullet points to a placeholder.
+
+        Args:
+            slide_index: Slide index (0-based).
+            placeholder_idx: Placeholder index to fill with bullets.
+            bullet_points: List of bullet lines.
+            presentation_id: Target presentation ID. Defaults to current presentation.
+
+        Returns:
+            Dict: {"message": str} or {"error": str}
+        
+ppt/manage_text: 
+        Unified text management tool for adding, formatting, validating text, and formatting multiple text runs.
+
+        Args:
+            slide_index: Slide index (0-based).
+            operation: One of "add", "format", "validate", "format_runs".
+            left, top, width, height: Geometry in inches when adding a new textbox.
+            text: Text content to insert or validate.
+            shape_index: Target shape index for format/validate/format_runs.
+            text_runs: For "format_runs", a list of run dicts with fields like
+                {"text": str, "bold": bool, "italic": bool, "underline": bool,
+                 "font_size": int, "font_name": str, "color": [r,g,b], "hyperlink": str}.
+            font_size, font_name, bold, italic, underline, color, bg_color, alignment, vertical_alignment:
+                Formatting options applied depending on the operation.
+            auto_fit: Auto-fit text box when adding.
+            validation_only: For validate, if True, only analyze; if False, may auto-fix.
+            min_font_size, max_font_size: Bounds for auto-fix validation.
+            presentation_id: Target presentation ID. Defaults to current presentation.
+
+        Returns:
+            Dict: Operation-specific response with message/indices or validation details, or {"error": str}
+        
+ppt/manage_image: 
+        Unified image management tool for adding and enhancing images.
+
+        Args:
+            slide_index: Slide index (0-based).
+            operation: "add" to insert an image, "enhance" to create an enhanced copy on disk.
+            image_source: File path or base64 string, depending on `source_type`.
+            source_type: "file" or "base64".
+            left, top, width, height: Geometry in inches for placement when adding.
+            enhancement_style: "presentation" for professional preset, or "custom" with numeric knobs.
+            brightness, contrast, saturation, sharpness, blur_radius, filter_type: Custom enhancement knobs.
+            output_path: Destination file path for enhanced image (optional).
+            presentation_id: Target presentation ID. Defaults to current presentation.
+
+        Returns:
+            Dict: For add: {"message": str, "shape_index": int, "image_path"?: str}
+                  For enhance: {"message": str, "enhanced_path": str}
+                  Or {"error": str}
+        
+ppt/add_table: 
+        Add a table to a slide with enhanced formatting options.
+
+        Args:
+            slide_index: Slide index (0-based).
+            rows, cols: Table dimensions.
+            left, top, width, height: Geometry in inches.
+            data: Optional 2D list of strings to populate the table.
+            header_row: Whether row 0 is a header row.
+            header_font_size, body_font_size: Font sizes for header/body.
+            header_bg_color, body_bg_color, border_color: RGB lists [r,g,b].
+            presentation_id: Target presentation ID. Defaults to current presentation.
+
+        Returns:
+            Dict: {"message": str, "shape_index": int, "rows": int, "cols": int} or {"error": str}
+        
+ppt/format_table_cell: 
+        Format a specific table cell.
+
+        Args:
+            slide_index: Slide index (0-based).
+            shape_index: Table shape index on the slide.
+            row, col: Cell indices to format.
+            font_size, font_name, bold, italic, color, bg_color, alignment, vertical_alignment:
+                Formatting options.
+            presentation_id: Target presentation ID. Defaults to current presentation.
+
+        Returns:
+            Dict: {"message": str} or {"error": str}
+        
+ppt/add_shape: 
+        Add an auto shape to a slide with enhanced options.
+
+        Args:
+            slide_index: Slide index (0-based).
+            shape_type: Shape type name (e.g., 'rectangle', 'oval', 'triangle').
+            left, top, width, height: Geometry in inches.
+            fill_color, line_color: RGB lists [r,g,b].
+            line_width: Line width in points.
+            text: Optional text to populate the shape.
+            font_size, font_color: Text formatting when text is provided.
+            presentation_id: Target presentation ID. Defaults to current presentation.
+
+        Returns:
+            Dict: {"message": str, "shape_index": int} or {"error": str}
+        
+ppt/add_chart: 
+        Add a chart to a slide with comprehensive formatting options.
+
+        Args:
+            slide_index: Slide index (0-based).
+            chart_type: One of column, bar, line, pie, etc.
+            left, top, width, height: Geometry in inches.
+            categories: X-axis category labels.
+            series_names: Names for each data series.
+            series_values: 2D numbers aligned to categories and series_names.
+            has_legend, legend_position, has_data_labels: Legend and labels configuration.
+            title, x_axis_title, y_axis_title: Chart titles.
+            color_scheme: Optional scheme to style chart.
+            presentation_id: Target presentation ID. Defaults to current presentation.
+
+        Returns:
+            Dict: {"message": str, "shape_index": int, "chart_type": str, "series_count": int, "categories_count": int}
+                  or {"error": str}
+        
+ppt/apply_professional_design: 
+        Unified professional design tool for themes, slides, and visual enhancements.
+        This applies professional styling and themes rather than structural layout changes.
+
+        Args:
+            operation: One of "professional_slide", "theme", "enhance", "get_schemes".
+            slide_index: Target slide index for enhance operations.
+            slide_type: For professional slide creation (e.g., "title_content").
+            color_scheme: One of "modern_blue", "corporate_gray", "elegant_green", "warm_red".
+            title: Optional title for created/enhanced slides.
+            content: Optional list of bullet/text lines for created slides.
+            apply_to_existing: Whether to apply theme across existing slides.
+            enhance_title, enhance_content, enhance_shapes, enhance_charts: Enhancement toggles.
+            presentation_id: Target presentation ID. Defaults to current presentation.
+
+        Returns:
+            Dict: Operation-specific result with message and applied settings; or {"error": str}
+        
+ppt/apply_picture_effects: 
+        Apply multiple picture effects in combination.
+
+        Args:
+            slide_index: Slide index (0-based).
+            shape_index: Target shape index.
+            effects: Dict of effect types to parameter dicts, e.g. {
+                "shadow": {"blur_radius": 4.0, "distance": 3.0, "direction": 315.0, "color": [r,g,b], "transparency": 0.6},
+                "glow": {"size": 5.0, "color": [0,176,240], "transparency": 0.4},
+                ...
+            }.
+            presentation_id: Target presentation ID. Defaults to current presentation.
+
+        Returns:
+            Dict: {"message": str, "applied_effects": List[str], "warnings"?: List[str]} or {"error": str}
+        
+ppt/manage_fonts: 
+        Unified font management tool for analysis, optimization, and recommendations.
+
+        Args:
+            operation: One of "analyze", "optimize", or "recommend".
+            font_path: Path to the font file to analyze/optimize.
+            output_path: Optional destination path when optimizing.
+            presentation_type: For recommendations (e.g., "business", "academic").
+            text_content: Optional corpus to guide optimization.
+
+        Returns:
+            Dict: Operation-specific result (e.g., analysis details, optimized path, or recommendations); or {"error": str}
+        
+ppt/list_slide_templates: 
+        List available slide layout templates and usage hints.
+        Args:
+            None
+        Returns:
+            Dict: {
+              "available_templates": Dict[str, Any],
+              "total_templates": int,
+              "usage_examples": Dict[str, Any],
+              "message": str
+            } or {"error": str}
+        
+ppt/apply_slide_template: 
+        Apply a predefined layout template to an existing slide.
+
+        Args:
+            slide_index: Target slide index (0-based).
+            template_id: Template identifier to apply.
+            color_scheme: Template color scheme name.
+            content_mapping: Mapping from element roles to text content.
+            image_paths: Mapping from element roles to image file paths.
+            presentation_id: Presentation identifier; defaults to current.
+
+        Returns:
+            Dict: Message, slide index, and template result or an error.
+        
+ppt/create_slide_from_template: 
+        Create a new slide from a layout template.
+
+        Args:
+            template_id: Template identifier to use.
+            color_scheme: Template color scheme name.
+            content_mapping: Mapping from element roles to text content.
+            image_paths: Mapping from element roles to image file paths.
+            layout_index: Base PowerPoint layout index.
+            presentation_id: Presentation identifier; defaults to current.
+
+        Returns:
+            Dict: Message, new slide index, and template result or an error.
+        
+ppt/create_presentation_from_templates: 
+        Create a presentation from a sequence of slide templates.
+
+        Args:
+            template_sequence: Ordered list of template configurations with content and images.
+            color_scheme: Color scheme to apply to all slides.
+            presentation_title: Optional presentation title.
+            presentation_id: Presentation identifier; defaults to current.
+        
+ppt/get_template_info: 
+        Get metadata and element info for a template.
+
+        Args:
+            template_id: Template identifier.
+
+        Returns:
+            Dict: Template fields, elements, color schemes, and a usage tip or an error.
+        
+ppt/auto_generate_presentation: 
+        Auto-generate a presentation using template sequences.
+
+        Args:
+            topic: Main topic or theme.
+            slide_count: Target number of slides.
+            presentation_type: Presentation style, such as "business" or "academic".
+            color_scheme: Color scheme name.
+            include_charts: Whether to include chart-oriented slides.
+            include_images: Whether to include image placeholders.
+            presentation_id: Presentation identifier; defaults to current.
+
+        Returns:
+            Dict: Generation summary with topic, slide count, and templates used or an error.
+        
+ppt/optimize_slide_text: 
+        Optimize text elements on a slide for better readability and fit.
+        
+        Args:
+            slide_index: Index of the slide to optimize
+            auto_resize: Whether to automatically resize fonts to fit containers
+            auto_wrap: Whether to apply intelligent text wrapping
+            optimize_spacing: Whether to optimize line spacing
+            min_font_size: Minimum allowed font size
+            max_font_size: Maximum allowed font size
+            presentation_id: Presentation ID (uses current if None)
+
+        Returns:
+            Dict: {"message": str, "slide_index": int, "optimizations_applied": List[...], "settings": {...}}
+                  or {"error": str}
+        
+ppt/manage_hyperlinks: 
+        Manage hyperlinks in text shapes and runs.
+        
+        Args:
+            operation: Operation type ("add", "remove", "list", "update")
+            slide_index: Index of the slide (0-based)
+            shape_index: Index of the shape on the slide (0-based)
+            text: Text to make into hyperlink (for "add" operation)
+            url: URL for the hyperlink
+            run_index: Index of text run within the shape (0-based)
+            presentation_id: Optional presentation ID (uses current if not provided)
+            
+        Returns:
+            Dict: For list: {"message": str, "hyperlinks": [...]}
+                  For add: {"message": str, "text": str, "url": str}
+                  For update/remove: {"message": str, ...}
+                  Or {"error": str}
+        
+ppt/update_chart_data: 
+        Replace existing chart data with new categories and series.
+        
+        Args:
+            slide_index: Index of the slide (0-based)
+            shape_index: Index of the chart shape (0-based)
+            categories: List of category names
+            series_data: List of dictionaries with 'name' and 'values' keys
+            presentation_id: Optional presentation ID (uses current if not provided)
+            
+        Returns:
+            Dict: {"message": str, "categories": List[str], "series_count": int, "series_names": List[str]}
+                  or {"error": str}
+        
+ppt/add_connector: 
+        Add connector lines/arrows between points on a slide.
+        
+        Args:
+            slide_index: Index of the slide (0-based)
+            connector_type: Type of connector ("straight", "elbow", "curved")
+            start_x: Starting X coordinate in inches
+            start_y: Starting Y coordinate in inches
+            end_x: Ending X coordinate in inches  
+            end_y: Ending Y coordinate in inches
+            line_width: Width of the connector line in points
+            color: RGB color as [r, g, b] list
+            presentation_id: Optional presentation ID (uses current if not provided)
+            
+        Returns:
+            Dict: {"message": str, "connector_type": str, "start_point": [x,y], "end_point": [x,y], "shape_index": int}
+                  or {"error": str}
+        
+ppt/manage_slide_masters: 
+        Access and manage slide master properties and layouts.
+        
+        Args:
+            operation: Operation type ("list", "get_layouts", "get_info")
+            master_index: Index of the slide master (0-based)
+            layout_index: Index of specific layout within master (0-based)
+            presentation_id: Optional presentation ID (uses current if not provided)
+            
+        Returns:
+            Dict: For list: {"message": str, "masters": [...], "total_masters": int}
+                  For get_layouts: {"message": str, "master_index": int, "layouts": [...]}
+                  For get_info: {"message": str, ..., "placeholders"?: [...]}
+                  Or {"error": str}
+        
+ppt/manage_slide_transitions: 
+        Manage slide transitions and timing.
+        
+        Args:
+            slide_index: Index of the slide (0-based)
+            operation: Operation type ("set", "remove", "get")
+            transition_type: Type of transition (basic support)
+            duration: Duration of transition in seconds
+            presentation_id: Optional presentation ID (uses current if not provided)
+            
+        Returns:
+            Dict: Operation-specific response with message and parameters; or {"error": str}
+        
+ppt/list_presentations: 
+    List all loaded presentations.
+
+    Args:
+        None
+
+    Returns:
+        Dict: {
+          "presentations": [{"id": str, "slide_count": int, "is_current": bool}, ...],
+          "current_presentation_id": Optional[str],
+          "total_presentations": int
+        }
+    
+ppt/switch_presentation: 
+    Switch to a different loaded presentation.
+
+    Args:
+        presentation_id: ID of a presentation previously created/opened and kept in memory.
+
+    Returns:
+        Dict: On success {
+          "message": str,
+          "previous_presentation_id": Optional[str],
+          "current_presentation_id": str
+        } or {"error": str}
+    
+ppt/get_server_info: 
+    Get information about the MCP server.
+
+    Args:
+        None
+
+    Returns:
+        Dict: Server name, version, tool counts, feature lists, and improvements.
+    
+Reddit-MCP-Server/search_hot_posts: 
+      Retrieve hot posts from a subreddit using the Reddit API.
+      Args:
+        subreddit (str): Subreddit name without the r/ prefix.
+        limit (int): Number of posts to retrieve.
+      Returns:
+        result (str): Plain-text list of posts with title, score, comments, author, and link, or an error message.
+    
+Reddit-MCP-Server/get_post_content: 
+      Retrieve a detailed Reddit post body with a limited set of comments.
+      Args:
+        post_id (str): Reddit post ID in base36 format.
+        comment_limit (int): Maximum number of top-level comments to fetch.
+        comment_depth (int): Maximum nesting level of comment threads.
+      Returns:
+        result (str): Plain-text block with post metadata, content, and selected comments, or an error message.
+    
+excel/apply_formula: 
+Apply Excel formula to cell.
+Excel formula will write to cell with verification.
+
+excel/validate_formula_syntax: Validate Excel formula syntax without applying it.
+excel/format_range: Apply formatting to a range of cells.
+excel/read_data_from_excel: 
+Read data from Excel worksheet with cell metadata including validation rules.
+
+Args:
+    filepath: Path to Excel file
+    sheet_name: Name of worksheet
+    start_cell: Starting cell (default A1)
+    end_cell: Ending cell (optional, auto-expands if not provided)
+    preview_only: Whether to return preview only
+
+Returns:  
+JSON string containing structured cell data with validation metadata.
+Each cell includes: address, value, row, column, and validation info (if any).
+
+excel/write_data_to_excel: 
+Write data to Excel worksheet.
+Excel formula will write to cell without any verification.
+
+PARAMETERS:  
+filepath: Path to Excel file
+sheet_name: Name of worksheet to write to
+data: List of lists containing data to write to the worksheet, sublists are assumed to be rows
+start_cell: Cell to start writing to, default is "A1"
+
+
+excel/create_workbook: Create new Excel workbook.
+excel/create_worksheet: Create new worksheet in workbook.
+excel/create_chart: Create chart in worksheet.
+excel/create_pivot_table: Create pivot table in worksheet.
+excel/create_table: Creates a native Excel table from a specified range of data.
+excel/copy_worksheet: Copy worksheet within workbook.
+excel/delete_worksheet: Delete worksheet from workbook.
+excel/rename_worksheet: Rename worksheet in workbook.
+excel/get_workbook_metadata: Get metadata about workbook including sheets, ranges, etc.
+excel/merge_cells: Merge a range of cells.
+excel/unmerge_cells: Unmerge a range of cells.
+excel/get_merged_cells: Get merged cells in a worksheet.
+excel/copy_range: Copy a range of cells to another location.
+excel/delete_range: Delete a range of cells and shift remaining cells.
+excel/validate_excel_range: Validate if a range exists and is properly formatted.
+excel/get_data_validation_info: 
+Get all data validation rules in a worksheet.
+
+This tool helps identify which cell ranges have validation rules
+and what types of validation are applied.
+
+Args:
+    filepath: Path to Excel file
+    sheet_name: Name of worksheet
+    
+Returns:
+    JSON string containing all validation rules in the worksheet
+
+excel/insert_rows: Insert one or more rows starting at the specified row.
+excel/insert_columns: Insert one or more columns starting at the specified column.
+excel/delete_sheet_rows: Delete one or more rows starting at the specified row.
+excel/delete_sheet_columns: Delete one or more columns starting at the specified column.
+nationalparks/findParks:   Search for national parks using location or filter criteria.
+  Args:
+    (see schema): Use FindParksSchema fields such as state, name, and activities.
+  Returns:
+    result (text): JSON string with matching park records.
+nationalparks/getParkDetails:   Get detailed information for a specific national park.
+  Args:
+    (see schema): Use GetParkDetailsSchema fields such as park code.
+  Returns:
+    result (text): JSON string describing the selected park.
+nationalparks/getAlerts:   Get current alerts for national parks.
+  Args:
+    (see schema): Use GetAlertsSchema fields such as park codes or state.
+  Returns:
+    result (text): JSON string listing active alerts.
+nationalparks/getVisitorCenters:   Get information about visitor centers and operating hours.
+  Args:
+    (see schema): Use GetVisitorCentersSchema fields such as park code or state.
+  Returns:
+    result (text): JSON string listing visitor centers.
+nationalparks/getCampgrounds:   Get information about available campgrounds and amenities.
+  Args:
+    (see schema): Use GetCampgroundsSchema fields such as park code or state.
+  Returns:
+    result (text): JSON string listing campgrounds.
+nationalparks/getEvents:   Find upcoming events at national parks.
+  Args:
+    (see schema): Use GetEventsSchema fields such as park code or date filters.
+  Returns:
+    result (text): JSON string listing events.
+paper_search/search_arxiv: 
+Search academic papers from arXiv.
+Args:
+  query (str): Search query text.
+  max_results (int): Maximum number of papers to return.
+
+Returns:
+  papers (List[Dict]): Paper metadata as dictionaries.
+
+paper_search/search_pubmed: 
+Search academic papers from PubMed.
+
+Args:
+  query (str): Search query text.
+  max_results (int): Maximum number of papers to return.
+
+Returns:
+  papers (List[Dict]): Paper metadata as dictionaries.
+
+paper_search/search_biorxiv: 
+Search academic papers from bioRxiv.
+
+Args:
+  query (str): Search query text.
+  max_results (int): Maximum number of papers to return.
+
+Returns:
+  papers (List[Dict]): Paper metadata as dictionaries.
+
+paper_search/search_medrxiv: 
+Search academic papers from medRxiv.
+
+Args:
+  query (str): Search query text.
+  max_results (int): Maximum number of papers to return.
+
+Returns:
+  papers (List[Dict]): Paper metadata as dictionaries.
+
+paper_search/search_google_scholar: 
+Search academic papers from Google Scholar.
+
+Args:
+  query (str): Search query text.
+  max_results (int): Maximum number of papers to return.
+
+Returns:
+  papers (List[Dict]): Paper metadata as dictionaries.
+
+paper_search/search_iacr: 
+Search academic papers from the IACR ePrint Archive.
+
+Args:
+  query (str): Search query text.
+  max_results (int): Maximum number of papers to return.
+  fetch_details (bool): Whether to fetch detailed metadata.
+
+Returns:
+  papers (List[Dict]): Paper metadata as dictionaries.
+
+paper_search/download_arxiv: 
+Download the PDF of an arXiv paper.
+
+Args:
+  paper_id (str): arXiv identifier.
+  save_path (str): Directory to save the PDF.
+
+Returns:
+  path (str): File path of the downloaded PDF.
+
+paper_search/download_pubmed: 
+Attempt to download the PDF of a PubMed paper.
+
+Args:
+  paper_id (str): PubMed ID (PMID).
+  save_path (str): Directory to save the PDF.
+
+Returns:
+  message (str): Status or explanation of download support.
+
+paper_search/download_biorxiv: 
+Download the PDF of a bioRxiv paper.
+
+Args:
+  paper_id (str): bioRxiv DOI.
+  save_path (str): Directory to save the PDF.
+
+Returns:
+  path (str): File path of the downloaded PDF.
+
+paper_search/download_medrxiv: 
+Download the PDF of a medRxiv paper.
+
+Args:
+  paper_id (str): medRxiv DOI.
+  save_path (str): Directory to save the PDF.
+
+Returns:
+  path (str): File path of the downloaded PDF.
+
+paper_search/download_iacr: 
+Download the PDF of an IACR ePrint paper.
+
+Args:
+  paper_id (str): IACR ePrint identifier.
+  save_path (str): Directory to save the PDF.
+
+Returns:
+  path (str): File path of the downloaded PDF.
+
+paper_search/read_arxiv_paper: 
+Read and extract text content from an arXiv paper PDF.
+
+Args:
+  paper_id (str): arXiv identifier.
+  save_path (str): Directory where the PDF is or will be stored.
+
+Returns:
+  text (str): Extracted plain text content.
+
+paper_search/read_pubmed_paper: 
+Attempt to read and extract text from a PubMed paper.
+
+Args:
+  paper_id (str): PubMed ID (PMID).
+  save_path (str): Directory path (may be unused).
+
+Returns:
+  message (str): Status or explanation of read support.
+
+paper_search/read_biorxiv_paper: 
+Read and extract text content from a bioRxiv paper PDF.
+
+Args:
+  paper_id (str): bioRxiv DOI.
+  save_path (str): Directory where the PDF is or will be stored.
+
+Returns:
+  text (str): Extracted plain text content.
+
+paper_search/read_medrxiv_paper: 
+Read and extract text content from a medRxiv paper PDF.
+
+Args:
+  paper_id (str): medRxiv DOI.
+  save_path (str): Directory where the PDF is or will be stored.
+
+Returns:
+  text (str): Extracted plain text content.
+
+paper_search/read_iacr_paper: 
+Read and extract text content from an IACR ePrint paper PDF.
+
+Args:
+  paper_id (str): IACR ePrint identifier.
+  save_path (str): Directory where the PDF is or will be stored.
+
+Returns:
+  text (str): Extracted plain text content.
+
+paper_search/search_semantic: 
+Search academic papers from Semantic Scholar.
+
+Args:
+  query (str): Search query text.
+  year (Optional[str]): Optional year filter expression.
+  max_results (int): Maximum number of papers to return.
+
+Returns:
+  papers (List[Dict]): Paper metadata as dictionaries.
+
+paper_search/download_semantic: 
+Download the PDF of a Semantic Scholar paper.
+
+Args:
+  paper_id (str): Semantic Scholar paper identifier or alias (ID, DOI, ARXIV, etc.).
+  save_path (str): Directory to save the PDF.
+
+Returns:
+  path (str): File path of the downloaded PDF.
+
+paper_search/read_semantic_paper: 
+Read and extract text content from a Semantic Scholar paper.
+
+Args:
+  paper_id (str): Semantic Scholar paper identifier or alias (ID, DOI, ARXIV, etc.).
+  save_path (str): Directory where the PDF is or will be stored.
+
+Returns:
+  text (str): Extracted plain text content.
+
+paper_search/search_crossref: 
+Search academic papers from the CrossRef database.
+
+Args:
+  query (str): Search query text.
+  max_results (int): Maximum number of papers to return.
+  **kwargs: Optional CrossRef filter or sort parameters.
+
+Returns:
+  papers (List[Dict]): Paper metadata as dictionaries.
+
+paper_search/get_crossref_paper_by_doi: 
+Get a specific CrossRef record by DOI.
+
+Args:
+  doi (str): Digital Object Identifier string.
+
+Returns:
+  paper (Dict): Paper metadata dictionary or empty dict if not found.
+
+paper_search/download_crossref: 
+Attempt to download the PDF of a CrossRef-referenced paper.
+
+Args:
+  paper_id (str): CrossRef DOI.
+  save_path (str): Directory to save the PDF.
+
+Returns:
+  message (str): Status or explanation of download support.
+
+paper_search/read_crossref_paper: 
+Attempt to read and extract text content from a CrossRef-referenced paper.
+
+Args:
+  paper_id (str): CrossRef DOI.
+  save_path (str): Directory where the PDF is or would be stored.
+
+Returns:
+  message (str): Status or explanation of read support.
+
+metmuseum-mcp/list-departments: List all departments in the Metropolitan Museum of Art.
+  Args:
+    None
+  Returns:
+    text (string): Department IDs and display names.
+metmuseum-mcp/search-museum-objects: Search for Met Museum objects and return matching object IDs.
+
+  Args:
+    q (string): Search query text across object metadata.
+    hasImages (boolean, optional): Whether to require objects with images.
+    title (boolean, optional): Whether to search in object titles.
+    departmentId (number, optional): Restrict results to a department ID.
+
+  Returns:
+    text (string): Total matches and a comma-separated list of object IDs.
+metmuseum-mcp/get-museum-object: Retrieve a Met Museum object by its numeric ID.
+
+  Args:
+    objectId (number): Museum object ID to retrieve.
+    returnImage (boolean, optional): Whether to include the object image as a resource.
+
+  Returns:
+    text+image: Text summary of object details and optional image content.
+nasa-mcp/get_astronomy_picture_of_day: Get NASA's astronomy picture of the day.
+
+Args:
+    date: Date of the image in YYYY-MM-DD format. If not specified, the current date is used.
+    count: If specified, returns 'count' random images. Cannot be used with 'date'.
+    thumbs: If True, returns the thumbnail URL for videos. If APOD is not a video, this parameter is ignored.
+
+nasa-mcp/get_asteroids_feed: Get a list of asteroids based on their closest approach date to Earth.
+
+Args:
+    start_date: Start date for asteroid search in YYYY-MM-DD format.
+    end_date: End date for asteroid search in YYYY-MM-DD format. 
+    The Feed date limit is only 7 Days. If not specified, 7 days after start_date is used.
+
+nasa-mcp/get_asteroid_lookup: Look up a specific asteroid based on its NASA JPL ID.
+
+Args:
+    asteroid_id: Asteroid ID in the NASA JPL small body (SPK-ID) system.
+
+nasa-mcp/browse_asteroids: Browse the asteroid dataset.
+nasa-mcp/get_coronal_mass_ejection: Get coronal mass ejection (CME) data.
+
+Args:
+    start_date: Start date in YYYY-MM-DD format. Defaults to 30 days before current date.
+    end_date: End date in YYYY-MM-DD format. Defaults to current date.
+
+nasa-mcp/get_geomagnetic_storm: Get geomagnetic storm (GST) data.
+
+Args:
+    start_date: Start date in YYYY-MM-DD format. Defaults to 30 days before current date.
+    end_date: End date in YYYY-MM-DD format. Defaults to current date.
+
+nasa-mcp/get_solar_flare: Get solar flare (FLR) data.
+
+Args:
+    start_date: Start date in YYYY-MM-DD format. Defaults to 30 days before current date.
+    end_date: End date in YYYY-MM-DD format. Defaults to current date.
+
+nasa-mcp/get_solar_energetic_particle: Get solar energetic particle (SEP) data.
+
+Args:
+    start_date: Start date in YYYY-MM-DD format. Defaults to 30 days before current date.
+    end_date: End date in YYYY-MM-DD format. Defaults to current date.
+
+nasa-mcp/get_magnetopause_crossing: Get magnetopause crossing (MPC) data.
+
+Args:
+    start_date: Start date in YYYY-MM-DD format. Defaults to 30 days before current date.
+    end_date: End date in YYYY-MM-DD format. Defaults to current date.
+
+nasa-mcp/get_radiation_belt_enhancement: Get radiation belt enhancement (RBE) data.
+
+Args:
+    start_date: Start date in YYYY-MM-DD format. Defaults to 30 days before current date.
+    end_date: End date in YYYY-MM-DD format. Defaults to current date.
+
+nasa-mcp/get_hight_speed_stream: Get high speed stream (HSS) data.
+
+Args:
+    start_date: Start date in YYYY-MM-DD format. Defaults to 30 days before current date.
+    end_date: End date in YYYY-MM-DD format. Defaults to current date.
+
+nasa-mcp/get_wsa_enlil_simulation: Get WSA+Enlil simulation data.
+
+Args:
+    start_date: Start date in YYYY-MM-DD format. Defaults to 7 days before current date.
+    end_date: End date in YYYY-MM-DD format. Defaults to current date.
+
+nasa-mcp/get_notifications: Get DONKI notifications.
+
+Args:
+    start_date: Start date in YYYY-MM-DD format. Defaults to 7 days before current date.
+    end_date: End date in YYYY-MM-DD format. Defaults to current date.
+    notification_type: Notification type. Options: all, FLR, SEP, CME, IPS, MPC, GST, RBE, report.
+
+nasa-mcp/get_earth_imagery: Get Earth imagery from Landsat 8 satellite.
+
+Args:
+    lat: Latitude.
+    lon: Longitude.
+    date: Image date in YYYY-MM-DD format. If not specified, the most recent image is used.
+    dim: Width and height of the image in degrees (0.025 degrees is approximately 2.7 km).
+    cloud_score: Calculate the percentage of the image covered by clouds (currently not available).
+
+nasa-mcp/get_earth_assets: Get information about available imagery assets for a specific location and date.
+
+Args:
+    lat: Latitude.
+    lon: Longitude.
+    date: Date in YYYY-MM-DD format.
+    dim: Width and height of the image in degrees (0.025 degrees is approximately 2.7 km).
+
+nasa-mcp/get_epic_imagery: Get images from the EPIC (Earth Polychromatic Imaging Camera).
+
+Args:
+    collection: Collection type. Options: natural, enhanced.
+
+nasa-mcp/get_epic_imagery_by_date: Get images from the EPIC (Earth Polychromatic Imaging Camera) for a specific date.
+
+Args:
+    date: Date in YYYY-MM-DD format.
+    collection: Collection type. Options: natural, enhanced.
+
+nasa-mcp/get_epic_dates: Get available dates for EPIC images.
+
+Args:
+    collection: Collection type. Options: natural, enhanced.
+
+nasa-mcp/get_exoplanet_data: Get data from NASA's Exoplanet Archive.
+
+Args:
+    query: Specific query to filter results using Exoplanet Archive syntax. Example: "pl_orbper > 300 and pl_rade < 2"
+    table: Table to query. Common options: exoplanets (confirmed planets), cumulative (Kepler Objects of Interest), koi (subset of cumulative), tce (Threshold Crossing Events).
+    format: Output format. Options: json, csv, xml, ipac. Default: json.
+
+nasa-mcp/get_mars_rover_photos: Get photos from a Mars rover (Curiosity, Opportunity, Spirit).
+Specify either sol (Martian day) or earth_date (YYYY-MM-DD), but not both.
+
+Args:
+    rover_name: Name of the rover (curiosity, opportunity, spirit).
+    sol: Martian sol (day number, starting from landing). Use if not using earth_date.
+    earth_date: Earth date in YYYY-MM-DD format. Use if not using sol.
+    camera: Filter by camera abbreviation (e.g., FHAZ, RHAZ, MAST, NAVCAM, PANCAM). See documentation for full list per rover.
+    page: Page number for results (25 photos per page).
+
+nasa-mcp/get_mars_rover_manifest: Get the mission manifest for a Mars rover (Curiosity, Opportunity, Spirit).
+Provides mission details like landing/launch dates, status, max sol/date, total photos, and photo counts per sol.
+
+Args:
+    rover_name: Name of the rover (curiosity, opportunity, spirit).
+
+okx/get_price:   Get the latest price for an OKX trading instrument.
+  Args:
+    instrument (string): Instrument ID such as BTC-USDT.
+  Returns:
+    result (text): JSON string with current price and basic ticker fields.
+okx/get_candlesticks:   Get recent candlestick data for an OKX trading instrument.
+  Args:
+    instrument (string): Instrument ID such as BTC-USDT.
+    bar (string): Candlestick interval like 1m or 1H.
+    limit (number): Number of candlesticks to return.
+  Returns:
+    result (text): JSON string with an array of candlestick records.
+hugeicons-mcp/list_icons:   List all available Hugeicons icons.
+  Args:
+    (none)
+  Returns:
+    result (text): JSON string containing the full icon index.
+hugeicons-mcp/search_icons:   Search icons by name or tags.
+  Args:
+    query (string): Search query string; multiple terms may be comma-separated.
+  Returns:
+    result (text): JSON string with matching icons and metadata.
+hugeicons-mcp/get_platform_usage:   Get platform-specific usage instructions for Hugeicons.
+  Args:
+    platform (string): Target platform such as react, vue, or html.
+  Returns:
+    result (text): Markdown or JSON text describing usage instructions.
+hugeicons-mcp/get_icon_glyphs:   Get all glyphs for an icon across supported styles.
+  Args:
+    icon_name (string): Icon identifier name.
+  Returns:
+    result (text): JSON string listing glyphs by style.
+hugeicons-mcp/get_icon_glyph_by_style:   Get the glyph for an icon in a specific style.
+  Args:
+    icon_name (string): Icon identifier name.
+    style (string): Icon style value.
+  Returns:
+    result (text): JSON string with the requested glyph entry.
+yahoo-finance/get_historical_stock_prices: 
+      Get historical stock price OHLCV data for a ticker from Yahoo Finance.
+      Args:
+        ticker (str): Stock ticker symbol.
+        start_date (str): Start date in YYYY-MM-DD format.
+        end_date (str): End date in YYYY-MM-DD format.
+        interval (str): Price interval such as 1d or 1h.
+      Returns:
+        result (str): JSON array of records with date and price fields.
+    
+yahoo-finance/get_stock_info: 
+      Get general stock and company information for a ticker from Yahoo Finance.
+      Args:
+        ticker (str): Stock ticker symbol.
+      Returns:
+        result (str): JSON object of Yahoo Finance info fields.
+    
+yahoo-finance/get_yahoo_finance_news: 
+      Get recent news items for a ticker from Yahoo Finance.
+      Args:
+        ticker (str): Stock ticker symbol.
+      Returns:
+        result (str): Plain-text list of titles and links for each news item.
+    
+yahoo-finance/get_stock_actions: 
+      Get dividend and split actions for a ticker from Yahoo Finance.
+      Args:
+        ticker (str): Stock ticker symbol.
+      Returns:
+        result (str): JSON array of corporate action records.
+    
+yahoo-finance/get_financial_statement: 
+      Get a selected financial statement for a ticker from Yahoo Finance.
+      Args:
+        ticker (str): Stock ticker symbol.
+        financial_type (str): Statement type such as income_stmt or balance_sheet.
+      Returns:
+        result (str): JSON array of statement records keyed by date.
+    
+yahoo-finance/get_holder_info: 
+      Get holder or ownership information for a ticker from Yahoo Finance.
+      Args:
+        ticker (str): Stock ticker symbol.
+        holder_type (str): Holder info type such as major_holders or institutional_holders.
+      Returns:
+        result (str): JSON array of holder records.
+    
+yahoo-finance/get_option_expiration_dates: 
+      Get available option expiration dates for a ticker.
+      Args:
+        ticker (str): Stock ticker symbol.
+      Returns:
+        result (str): JSON list of expiration date strings.
+    
+yahoo-finance/get_option_chain: 
+      Get an option chain for a ticker, expiration date, and calls or puts side.
+      Args:
+        ticker (str): Stock ticker symbol.
+        expiration_date (str): Expiration date in YYYY-MM-DD format.
+        option_type (str): Which side to return, 'calls' or 'puts'.
+      Returns:
+        result (str): JSON array of option contracts.
+    
+yahoo-finance/get_recommendations: 
+      Get analyst recommendations or upgrades/downgrades for a ticker.
+      Args:
+        ticker (str): Stock ticker symbol.
+        recommendation_type (str): 'recommendations' or 'upgrades_downgrades'.
+        months_back (int): How many months of history to include.
+      Returns:
+        result (str): JSON array of recommendation records.
+    
+math/add: Adds two numbers together
+math/subtract: Subtracts the second number from the first number
+math/multiply: Multiplies two numbers together
+math/division: Divides the first number by the second number
+math/sum: Adds any number of numbers together
+math/modulo: Divides two numbers and returns the remainder
+math/mean: Calculates the arithmetic mean of a list of numbers
+math/median: Calculates the median of a list of numbers
+math/mode: Finds the most common number in a list of numbers
+math/min: Finds the minimum value from a list of numbers
+math/max: Finds the maximum value from a list of numbers
+math/floor: Rounds a number down to the nearest integer
+math/ceiling: Rounds a number up to the nearest integer
+math/round: Rounds a number to the nearest integer
+math/sin: Calculates the sine of a number in radians
+math/arcsin: Calculates the arcsine of a number in radians
+math/cos: Calculates the cosine of a number in radians
+math/arccos: Calculates the arccosine of a number in radians
+math/tan: Calculates the tangent of a number in radians
+math/arctan: Calculates the arctangent of a number in radians
+math/radiansToDegrees: Converts a radian value to its equivalent in degrees
+math/degreesToRadians: Converts a degree value to its equivalent in radians
+nixos/nix: Query NixOS, Home Manager, Darwin, flakes, FlakeHub, or Nixvim.
+nixos/nix_versions: Get package version history from NixHub.io.
+car-price/get_car_brands: 
+      Get all available car brands from FIPE via the fipe.online API.
+      Args:
+        (none)
+      Returns:
+        result (str): JSON string containing the list of brand identifiers and names.
+    
+car-price/search_brand_model_price: 
+      Search car model prices for a brand using a model name keyword.
+      Args:
+        brand_name (str): Car brand name to search, such as a manufacturer name.
+        model_keyword (str): Substring or keyword of the model name.
+      Returns:
+        result (str): JSON string listing matching models and their latest FIPE prices.
+    
