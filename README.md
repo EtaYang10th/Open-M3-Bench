@@ -34,6 +34,8 @@
   </a>
 </p>
 
+Project blog: [m3-bench.github.io](https://etayang10th.github.io/m3-bench.github.io/)
+
 A lightweight benchmarking and analysis suite around the Model Context Protocol (MCP). It orchestrates multiple MCP servers, drives different LLMs to complete tasks, produces reproducible results, and offers step-wise evaluations and visualizations. 🎯
 
 - Key features ✨:
