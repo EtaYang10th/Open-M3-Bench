@@ -10,6 +10,9 @@
   <a href="https://arxiv.org/abs/2511.17729">
     <img src="https://img.shields.io/badge/arXiv-2511.17729-b31b1b.svg" alt="arXiv">
   </a>
+  <a href="https://etayang10th.github.io/m3-bench.github.io/">
+    <img src="https://img.shields.io/badge/Blog-m3--bench.github.io-1a56db?logo=github&logoColor=white" alt="M3-Bench blog">
+  </a>
   <a href="https://github.com/EtaYang10th/Open-M3-Bench/blob/main/LICENSE">
     <img src="https://img.shields.io/github/license/EtaYang10th/Open-M3-Bench" alt="License">
   </a>
@@ -45,6 +48,7 @@ A lightweight benchmarking and analysis suite around the Model Context Protocol 
 
 - 2025-11-20: Initial public release of M3‑Bench.
 - 2026-1-26: Added optional support for the total number of tools, and added three new CV-related test metrics.
+- 2026-5-10: Replaced the paid **DINO-X-MCP** (cloud API, quota-limited) with a local **Ultralytics YOLO / YOLO-World** drop-in (`mcp-yolo`). Same tool names (`detect-all-objects`, `detect-objects-by-text`) and payload shape, no cloud key or quota. The old `dinox-mcp` entry in `mcp_servers.json` is kept but set to `"disabled": true`.
 
 ---
 
