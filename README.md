@@ -179,6 +179,24 @@ Then open the reported URL. Uploaded images are injected as data URLs for the mo
 
 ---
 
+## Citation
+
+If M³-Bench helps your research, please cite:
+
+```bibtex
+@misc{zhou2025m3bench,
+  title         = {M$^3$-Bench: Multi-Modal, Multi-Hop, Multi-Threaded Tool-Using MLLM Agent Benchmark},
+  author        = {Zhou, Yang and Zhao, Mingyu and Wang, Zhenting and Gu, Difei and Guo, Bangwei and Ye, Ruosong and Han, Ligong and Jin, Can and Metaxas, Dimitris N.},
+  year          = {2025},
+  eprint        = {2511.17729},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.AI},
+  url           = {https://arxiv.org/abs/2511.17729}
+}
+```
+
+---
+
 ## License 📄
 
 Released under the MIT License. See `LICENSE` for details.
