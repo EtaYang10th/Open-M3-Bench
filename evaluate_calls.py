@@ -41,6 +41,17 @@ def load_predictions(pred_path: str) -> List[Dict[str, Any]]:
 
 
 def count_illegal_calling(samples: List[Dict[str, Any]]) -> int:
+    """Count samples where the model failed to emit a usable tool_calls payload.
+
+    An empty ``tool_calls`` list has two very different causes:
+
+    * ``stop_reason == "completed"`` -- the model deliberately called no tool
+      because it considered the task finished. This is normal termination and
+      must NOT be counted as illegal.
+    * ``stop_reason == "invalid_tool_calls"`` (or no marker at all, for runs
+      produced before the marker existed) -- the payload could not be parsed,
+      which is the protocol failure this metric is about.
+    """
     illegal = 0
     for item in samples:
         dialogue = item.get("dialogue")
@@ -53,9 +64,12 @@ def count_illegal_calling(samples: List[Dict[str, Any]]) -> int:
             if not isinstance(work, dict):
                 continue
             tool_calls = work.get("tool_calls")
-            if isinstance(tool_calls, list) and len(tool_calls) == 0:
-                illegal += 1
-                break  # count at most once per sample
+            if not (isinstance(tool_calls, list) and len(tool_calls) == 0):
+                continue
+            if turn.get("stop_reason") == "completed":
+                continue
+            illegal += 1
+            break  # count at most once per sample
     return illegal
 
 

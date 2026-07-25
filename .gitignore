@@ -35,3 +35,26 @@ env/
 .DS_Store
 Thumbs.db
 
+# --- Mock/fallback runtime artifacts (isolated under tools/mock_runtime/) ---
+# Ignore runtime cache & logs, but KEEP curated sample fixtures + the .gitignore.
+tools/mock_runtime/cache/
+tools/mock_runtime/logs/
+# (tools/mock_runtime/fixtures/ is committed as documentation samples.)
+
+# --- Verification / discovery outputs (large, regenerable) ---
+tools/verify_report.json
+tools/verify_run.log
+tools/mcp_tools_dump.json
+tools/mcp_functional_retest.json
+tools/mcp_functional_report.json
+
+# --- Vendored upstream demo assets (not needed to run the benchmark) ---
+servers/Office-PowerPoint-MCP-Server/public/
+servers/healthcare-mcp-public/*.dxt
+
+# Overwritten on every run by round_runner; carries no state the code reads back.
+tool_lines.txt
+
+# --- Paper/rebuttal statistics (kept local, not published) ---
+analysis/
+

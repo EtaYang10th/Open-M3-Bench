@@ -6,6 +6,35 @@ import feedparser
 from ..paper import Paper
 from PyPDF2 import PdfReader
 import os
+import time
+
+
+def _get_with_backoff(url, params=None, *, max_retries=5, base_delay=3.0, timeout=30):
+    """GET with exponential backoff. arXiv requires >=3s between calls and
+    throttles with HTTP 429. Retries on 429/5xx and network errors instead of
+    silently returning an empty feed."""
+    delay = base_delay
+    last_exc = None
+    for attempt in range(1, max_retries + 1):
+        try:
+            resp = requests.get(url, params=params, timeout=timeout)
+            if resp.status_code == 200:
+                return resp
+            if resp.status_code == 429 or resp.status_code >= 500:
+                print(f"[arxiv] HTTP {resp.status_code}, retry {attempt}/{max_retries} in {delay:.1f}s")
+                time.sleep(delay)
+                delay *= 2
+                continue
+            resp.raise_for_status()
+            return resp
+        except requests.RequestException as e:
+            last_exc = e
+            print(f"[arxiv] request error ({e}); retry {attempt}/{max_retries} in {delay:.1f}s")
+            time.sleep(delay)
+            delay *= 2
+    if last_exc:
+        raise last_exc
+    raise RuntimeError(f"arXiv request failed after {max_retries} retries (last status not 200)")
 
 class PaperSource:
     """Abstract base class for paper sources"""
@@ -29,8 +58,10 @@ class ArxivSearcher(PaperSource):
             'sortBy': 'submittedDate',
             'sortOrder': 'descending'
         }
-        response = requests.get(self.BASE_URL, params=params)
+        response = _get_with_backoff(self.BASE_URL, params=params)
         feed = feedparser.parse(response.content)
+        if not feed.entries:
+            print(f"[arxiv] no entries for query={query!r} (status={response.status_code})")
         papers = []
         for entry in feed.entries:
             try:

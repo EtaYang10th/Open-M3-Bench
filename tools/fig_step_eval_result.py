@@ -16,8 +16,12 @@ from PIL import Image
 # Resolve to repo root: two levels up from this file
 REPO_ROOT = Path(__file__).resolve().parent.parent
 BASE_DIR = (REPO_ROOT / "results").resolve()
-# Directory of brand logos
-IMAGE_DIR = (REPO_ROOT / "image").resolve()
+# Directory of brand logos. Optional: when absent the model names are drawn as
+# plain text instead (see find_logo_image_path).
+IMAGE_DIR = next(
+    (p for p in ((REPO_ROOT / "images").resolve(), (REPO_ROOT / "image").resolve()) if p.is_dir()),
+    (REPO_ROOT / "images").resolve(),
+)
 MODEL_NAMES = [
     'glm-4.5v',
     "Qwen2.5-VL-72B-Instruct",
@@ -49,6 +53,9 @@ METRICS = [
 
 
 PDF_OUT = Path("save/metrics_mllm_step_eval.pdf")
+# Bitmap twin of PDF_OUT: the repo root .gitignore drops *.pdf, so the README
+# has to point at a committed PNG instead.
+PNG_OUT = Path("images/metrics_mllm_step_eval.png")
 EFF_CSV_OUT = Path("save/avg_rounds_tool_calls.csv")
 # ===================
 
@@ -487,7 +494,11 @@ def main():
     # ax.set_title("M³-Bench Step-level Evaluation (Avg. score)", fontsize=TITLE_FONT_SIZE, pad=10)
 
     plt.tight_layout()
+    PDF_OUT.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(PDF_OUT, dpi=300)
+    PNG_OUT.parent.mkdir(parents=True, exist_ok=True)
+    plt.savefig(PNG_OUT, dpi=300)
+    print(f"[INFO] Saved {PDF_OUT} and {PNG_OUT}")
 
     if missing:
         print("[INFO] Models missing results_eval.json:", ", ".join(missing))

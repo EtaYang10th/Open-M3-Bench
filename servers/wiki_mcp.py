@@ -10,7 +10,9 @@ server = FastMCP("wiki")
 # --- new: shared session with proper headers & retries ---
 _session = requests.Session()
 _session.headers.update({
-    "User-Agent": "mcp-wiki/0.1 (eta@rutgers.edu)",   # <-- replace with your contact info
+    # Wikipedia's API policy asks for a contact in the UA string.
+    # Replace the placeholder below with your own repo/email before heavy use.
+    "User-Agent": "M3-Bench-mcp-wiki/0.1 (https://github.com/EtaYang10th/Open-M3-Bench)",
     "Accept": "application/json",
 })
 _retry = Retry(

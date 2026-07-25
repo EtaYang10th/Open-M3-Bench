@@ -210,7 +210,18 @@ async def places_nearby_search(location: Dict[str, float],
         data (Dict[str, Any]): JSON with endpoint, field mask, request body, and API response.
     """
     url = f"{PLACES_V1}/places:searchNearby"
-    body = {"location": location, "radiusMeters": int(radiusMeters)}
+    # Places API (New) v1 requires locationRestriction.circle {center, radius}.
+    # Accept both {latitude, longitude} and {lat, lng} key spellings.
+    _lat = location.get("latitude", location.get("lat"))
+    _lng = location.get("longitude", location.get("lng"))
+    body: Dict[str, Any] = {
+        "locationRestriction": {
+            "circle": {
+                "center": {"latitude": _lat, "longitude": _lng},
+                "radius": float(radiusMeters),
+            }
+        }
+    }
     if includedTypes: body["includedTypes"] = includedTypes
     if languageCode: body["languageCode"] = languageCode
     if regionCode: body["regionCode"] = regionCode
@@ -268,6 +279,43 @@ async def place_photo_media(photo_resource: str,
 # ---------- Routes API v2 ----------
 ROUTES_V2 = "https://routes.googleapis.com/directions/v2:computeRoutes"
 
+_WAYPOINT_PASSTHROUGH_KEYS = {"location", "placeId", "address", "navigationPointToken"}
+
+def _to_waypoint(value: Any) -> Any:
+    """Normalize a waypoint input into a Routes API v2 Waypoint structure.
+
+    Accepts: an already-valid waypoint (location/placeId/address/...),
+    a bare {"latLng": {...}} or {latitude/longitude} or {lat/lng} dict, or
+    a plain string ("lat,lng" -> latLng, otherwise treated as address).
+    Unknown shapes are returned unchanged so the caller/API can surface errors.
+    """
+    if isinstance(value, str):
+        s = value.strip()
+        parts = s.split(",")
+        if len(parts) == 2:
+            try:
+                lat = float(parts[0].strip()); lng = float(parts[1].strip())
+                return {"location": {"latLng": {"latitude": lat, "longitude": lng}}}
+            except (TypeError, ValueError):
+                pass
+        return {"address": s}
+    if isinstance(value, dict):
+        # Already a valid waypoint (has a union location_type key) -> passthrough.
+        if any(k in value for k in _WAYPOINT_PASSTHROUGH_KEYS):
+            return value
+        # Bare {"latLng": {...}} -> wrap in location.
+        if "latLng" in value and isinstance(value["latLng"], dict):
+            return {"location": {"latLng": value["latLng"]}}
+        # {latitude, longitude} or {lat, lng} -> wrap.
+        lat = value.get("latitude", value.get("lat"))
+        lng = value.get("longitude", value.get("lng", value.get("lon")))
+        if lat is not None and lng is not None:
+            try:
+                return {"location": {"latLng": {"latitude": float(lat), "longitude": float(lng)}}}
+            except (TypeError, ValueError):
+                return value
+    return value
+
 _DEF_ROUTE_FIELDS = ",".join([
     "routes.distanceMeters",
     "routes.duration",
@@ -300,11 +348,12 @@ async def compute_route(origin: Dict[str, Any],
         data (Dict[str, Any]): JSON with endpoint, field mask, request body, and route response.
     """
     body: Dict[str, Any] = {
-        "origin": origin,
-        "destination": destination,
+        "origin": _to_waypoint(origin),
+        "destination": _to_waypoint(destination),
         "travelMode": travelMode,
     }
-    if intermediates: body["intermediates"] = intermediates
+    if intermediates:
+        body["intermediates"] = [_to_waypoint(w) for w in intermediates]
     if routingPreference: body["routingPreference"] = routingPreference
     if avoidTolls is not None:
         body["routeModifiers"] = {"avoidTolls": bool(avoidTolls)}

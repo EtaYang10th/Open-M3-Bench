@@ -1,0 +1,7 @@
+[
+  {
+    "_comment": "Sample curated fixture (committed as documentation). Exact-args match returns this deterministically; any OTHER args fall through to record-replay cache, then the LLM simulator.",
+    "arguments": {"keywords": "Pepsi 20 oz bottle", "n": 3, "page": 1, "amazon_domain": "amazon.com"},
+    "result": "- Pepsi Cola Soda Pop, 20 oz Bottle\n  https://www.amazon.com/dp/B00J2S5X9K\n  https://m.media-amazon.com/images/I/61pepsi20oz.jpg\n  Price: $2.49\n- Pepsi Wild Cherry Soda, 20 fl oz Bottle\n  https://www.amazon.com/dp/B0058XG3HK\n  https://m.media-amazon.com/images/I/61pepsicherry.jpg\n  Price: $2.49\n- Pepsi Soda Bottles, 20 oz (Pack of 8)\n  https://www.amazon.com/dp/B07PGL2N3T\n  https://m.media-amazon.com/images/I/71pepsipack.jpg\n  Price: $12.99"
+  }
+]

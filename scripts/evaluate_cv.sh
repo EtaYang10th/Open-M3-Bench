@@ -3,25 +3,28 @@
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")"/.. >/dev/null 2>&1 && pwd)"
 echo "SCRIPT_DIR: $SCRIPT_DIR"
 
-source ~/.bashrc
-conda activate mcp_app
+if [[ "${M3_SKIP_CONDA:-0}" != "1" ]] && command -v conda >/dev/null 2>&1; then
+  # shellcheck disable=SC1091
+  source "$(conda info --base)/etc/profile.d/conda.sh"
+  conda activate "${M3_CONDA_ENV:-mcp_app}"
+fi
 
 
 # Model list (add/remove as needed)
 experiment_names=(
   "gpt-5"
-  # "gpt-5-mini"
-  # "gpt-5-nano"
-  # "internvl3.5-latest"
+  "gpt-5-mini"
+  "gpt-5-nano"
+  "internvl3.5-latest"
   "gemini-2.5-pro"
   "gemini-2.5-flash"
   "gemini-2.5-flash-lite"
-  # "claude-haiku-4-5"
+  "claude-haiku-4-5"
   "claude-sonnet-4-5"
-  # "Llama-4-Scout-17B-16E-Instruct"
-  # "Qwen2.5-VL-72B-Instruct"
-  # "glm-4.5v"
-  # "grok-4-fast-reasoning"
+  "Llama-4-Scout-17B-16E-Instruct"
+  "Qwen2.5-VL-72B-Instruct"
+  "glm-4.5v"
+  "grok-4-fast-reasoning"
   "grok-4-0709"
 )
 

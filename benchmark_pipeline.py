@@ -2,7 +2,9 @@
 # -*- coding: utf-8 -*-
 
 import os, re, json, asyncio, textwrap, argparse, time
+import inspect
 import shutil
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
 import shutil
@@ -11,6 +13,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from models import create_model_driver
 from mcp_host import MCPHost
 from round_runner import RoundRunner, strip_think
+import workspace as ws_mod
 
 import tqdm
 
@@ -20,49 +23,72 @@ MEDIA_DIR.mkdir(parents=True, exist_ok=True)
 
 
 
+def _task_timeout(default: float = 1800.0) -> float:
+    """Wall-clock budget for one task (env M3_TASK_TIMEOUT; 0 disables).
+
+    Per-request LLM/tool timeouts bound a single call, but a task issues many of
+    them, so without this a slow-but-alive task can run for hours.
+    """
+    try:
+        return float(os.environ.get("M3_TASK_TIMEOUT", default))
+    except (TypeError, ValueError):
+        return default
+
+
+def _max_task_requeue(default: int = 2) -> int:
+    """How many times one task may be requeued (env M3_MAX_TASK_REQUEUE)."""
+    try:
+        return max(0, int(os.environ.get("M3_MAX_TASK_REQUEUE", default)))
+    except (TypeError, ValueError):
+        return default
+
+
+def _executor_workers(num_client: int) -> int:
+    """Size of the default ThreadPoolExecutor (env M3_EXECUTOR_WORKERS; 0 keeps
+    the interpreter default). Each worker needs one thread per in-flight LLM
+    call, plus headroom for threads leaked by cancelled (timed-out) calls."""
+    raw = os.environ.get("M3_EXECUTOR_WORKERS")
+    if raw is not None:
+        try:
+            return max(0, int(raw))
+        except (TypeError, ValueError):
+            pass
+    return max(32, num_client * 8)
+
+
 def resolve_image_path(base_dir: Path, rel_path: str) -> Optional[str]:
     if not rel_path:
         return None
     cand1 = (base_dir / rel_path).resolve()
     if cand1.exists():
         return str(cand1)
+    # Fallback: annotation 'image' fields are often prefixed (e.g. images/<id>.png)
+    # while the actual files live flat under the image_dir as <id>.png. Try the
+    # basename directly under base_dir so the real task image is still uploaded
+    # (prevents the model from fabricating image paths for a missing upload).
+    base_name = Path(rel_path).name
+    cand2 = (base_dir / base_name).resolve()
+    if cand2.exists():
+        return str(cand2)
     return None
 
 
-def copy_into_project_media(src_path: str) -> str:
+def copy_into_project_media(src_path: str, ws_dir: Optional[Path] = None) -> str:
+    """Make a task's source image reachable by the MCP subprocesses.
+
+    Delegates to ``workspace.materialize_input`` so the placement strategy is
+    selected by ``M3_WORKSPACE_MODE``. The old unconditional copy-with-numbered-
+    suffix behaviour is still available under ``legacy`` mode; the default
+    ``dedup`` mode reuses an existing byte-identical copy so the returned path
+    (and therefore the ``image_id`` the model sees) is the same on every run.
     """
-    Copy the given absolute image path into project ./media directory, avoiding name collisions.
-    Return the absolute target path inside ./media.
-    """
-    try:
-        src = Path(src_path).resolve()
-    except Exception:
-        return src_path
-    if not src.exists() or not src.is_file():
-        return src_path
-    target = (MEDIA_DIR / src.name)
-    # Avoid collisions by adding incremental suffixes
-    if target.exists():
-        stem, suf = target.stem, target.suffix
-        k = 1
-        while True:
-            cand = MEDIA_DIR / f"{stem}_{k}{suf}"
-            if not cand.exists():
-                target = cand
-                break
-            k += 1
-    try:
-        shutil.copy2(str(src), str(target))
-        return str(target.resolve())
-    except Exception:
-        # On copy failure, fall back to original path
-        return src_path
+    return ws_mod.materialize_input(src_path, ws_dir)
 
 
 # Removed type_to_limits: max_step and max_concurrent are passed via CLI
 
 
-async def run_single_task(host: MCPHost, model_driver, task: Dict[str, Any], top_tools: int, max_new_tokens: int, max_step: int, max_concurrent: int, image_base_dir: Optional[Path], fuzzy: bool, num_context_tools: int = 0, gt_tools: Optional[List[str]] = None) -> Dict[str, Any]:
+async def run_single_task(host: MCPHost, model_driver, task: Dict[str, Any], top_tools: int, max_new_tokens: int, max_step: int, max_concurrent: int, image_base_dir: Optional[Path], fuzzy: bool, num_context_tools: int = 0, gt_tools: Optional[List[str]] = None, run_id: Optional[str] = None) -> Dict[str, Any]:
 
     question = (task.get("question") if fuzzy else task.get("prompt")) or ""
     image_rel = task.get("image") or ""
@@ -70,10 +96,19 @@ async def run_single_task(host: MCPHost, model_driver, task: Dict[str, Any], top
     base_for_images = image_base_dir if image_base_dir is not None else task_dir
     image_abs = resolve_image_path(base_for_images, image_rel)
 
+    # Per-task workspace: a deterministic, freshly emptied directory so a rerun
+    # of the same task sees exactly the same paths and none of the previous
+    # attempt's (or any other task's) artifacts.
+    ws_dir: Optional[Path] = None
+    if ws_mod.workspace_mode() == ws_mod.MODE_ISOLATED:
+        ws_dir = ws_mod.task_workspace(run_id or ws_mod.resolve_run_id(), str(task.get("id") or "task"))
+    # Snapshot cwd artifacts so the post-task sweep can delete only what THIS
+    # task created, instead of every .png in the repo root.
+    cwd_before = ws_mod.snapshot_cwd_files()
+
     uploaded_manifest: List[Dict[str, str]] = []
     if image_abs:
-        # copy initial image to project ./media, ensure subsequent tool outputs also fall under ./media
-        media_abs = copy_into_project_media(image_abs)
+        media_abs = copy_into_project_media(image_abs, ws_dir)
         uploaded_manifest.append({
             "image_id": Path(media_abs).name,
             "file_path": media_abs,
@@ -86,8 +121,17 @@ async def run_single_task(host: MCPHost, model_driver, task: Dict[str, Any], top
         hint = question
     history.append({"role": "user", "content": hint})
 
-    # Use shared RoundRunner
-    runner = RoundRunner(host=host, model_driver=model_driver, max_step=max_step, max_concurrent=max_concurrent, top_tools=top_tools, num_context_tools=num_context_tools, gt_tools=gt_tools)
+    # Use shared RoundRunner. ``ws_dir`` is passed only when the installed
+    # RoundRunner accepts it, so this file stays importable against a runner
+    # revision that predates the workspace work.
+    runner_kwargs: Dict[str, Any] = dict(
+        host=host, model_driver=model_driver, max_step=max_step,
+        max_concurrent=max_concurrent, top_tools=top_tools,
+        num_context_tools=num_context_tools, gt_tools=gt_tools,
+    )
+    if "ws_dir" in inspect.signature(RoundRunner.__init__).parameters:
+        runner_kwargs["ws_dir"] = ws_dir
+    runner = RoundRunner(**runner_kwargs)
     rr = await runner.run(history=history, last_user=hint, uploaded_file_paths=[u["file_path"] for u in uploaded_manifest])
     round_groups: List[List[Dict[str, Any]]] = rr.get("round_groups", [])
     dialogues: List[Dict[str, str]] = rr.get("dialogues", [])
@@ -117,6 +161,11 @@ async def run_single_task(host: MCPHost, model_driver, task: Dict[str, Any], top
 
     used_rounds = len(round_groups)
     used_concurrency = max((len(g) for g in round_groups), default=0)
+
+    # Relocate/remove only the cwd artifacts this task produced. In isolated
+    # mode they are moved into the task workspace so nothing is silently lost.
+    if ws_mod.workspace_mode() != ws_mod.MODE_LEGACY:
+        ws_mod.sweep_cwd_new_files(cwd_before, move_to=ws_dir)
 
     out: Dict[str, Any] = {
         "id": task.get("id"),
@@ -336,6 +385,22 @@ async def main():
             return {}
         return id_to_result
 
+    run_id = ws_mod.resolve_run_id(extract_model_name(model_path))
+    print(f"[workspace] {ws_mod.describe()} run_id={run_id}")
+
+    # Cancelling a coroutine that awaits run_in_executor does NOT interrupt the
+    # underlying thread, so every timed-out LLM call leaks one worker. The default
+    # pool caps at min(32, cpu+4); once saturated, later run_in_executor calls
+    # never get scheduled and the event loop stalls with no await to blame.
+    # Sizing the pool to the worker count plus headroom keeps a leak from
+    # starving the run. Set M3_EXECUTOR_WORKERS=0 to keep the default pool.
+    _ex_workers = _executor_workers(num_client)
+    if _ex_workers > 0:
+        asyncio.get_running_loop().set_default_executor(
+            ThreadPoolExecutor(max_workers=_ex_workers, thread_name_prefix="m3-llm")
+        )
+        print(f"[executor] default ThreadPoolExecutor max_workers={_ex_workers}")
+
     host = MCPHost(Path("mcp_servers.json"))
     await host.start()
     try:
@@ -383,6 +448,39 @@ async def main():
         for t in tasks_to_run:
             task_queue.put_nowait(t)
 
+        # A task that always fails used to be requeued forever (the requeue reset
+        # ``attempt`` to 0), so ``task_queue.join()`` could never return and the
+        # whole batch hung on it. Cap the total number of times any single task
+        # may be handed back to the queue.
+        requeue_counts: Dict[Any, int] = {}
+        max_requeue = _max_task_requeue()
+        task_budget = _task_timeout()
+
+        async def _record_task_error(task: Dict[str, Any], exc: BaseException) -> None:
+            """Write a minimal error record for a task that exhausted its budget."""
+            tid = task.get("id")
+            rec: Dict[str, Any] = {
+                "id": tid,
+                "image": task.get("image"),
+                "type": task.get("type"),
+                "question": (task.get("question") if args.fuzzy else task.get("prompt")) or "",
+                "steps": [],
+                "num_step": 0,
+                "max_num_concurrent": 0,
+                "final_reply": "",
+                "dialogue": [],
+                "error": f"{type(exc).__name__}: {exc}",
+            }
+            print(f"[ERROR] task {tid} gave up after retries: {rec['error']}")
+            async with write_lock:
+                if tid is not None:
+                    id_to_result[tid] = rec
+                    if fail_file is not None:
+                        fail_id_to_result[tid] = rec
+                        atomic_write_json(fail_file, list(fail_id_to_result.values()))
+                atomic_write_json(output_file, list(id_to_result.values()))
+                pbar.update(1)
+
         async def worker(worker_idx: int) -> None:
             while True:
                 task: Dict[str, Any] = await task_queue.get()
@@ -393,7 +491,7 @@ async def main():
                             # Retrieve GT tools for this task
                             task_gt = gt_map.get(task.get("id"), [])
                             
-                            result = await run_single_task(
+                            _coro = run_single_task(
                                 host,
                                 model_driver,
                                 task,
@@ -405,7 +503,15 @@ async def main():
                                 fuzzy=bool(args.fuzzy),
                                 num_context_tools=num_context_tools,
                                 gt_tools=task_gt,
+                                run_id=run_id,
                             )
+                            # Outermost guard: the per-call LLM/tool timeouts bound
+                            # one request each, but a task makes O(max_step) of them,
+                            # so their sum is unbounded. This caps the whole task.
+                            if task_budget > 0:
+                                result = await asyncio.wait_for(_coro, timeout=task_budget)
+                            else:
+                                result = await _coro
                             task_id = result.get("id")
 
                             # Serialize updates and file writes
@@ -457,24 +563,39 @@ async def main():
                                             atomic_write_json(fail_file, list(fail_id_to_result.values()))
 
                                 pbar.update(1)
-                                # Cleanup: remove all .png files in current directory (non-recursive)
-                                try:
-                                    for p in Path(".").iterdir():
-                                        if p.is_file() and p.suffix.lower() == ".png":
-                                            try:
-                                                p.unlink()
-                                            except Exception:
-                                                pass
-                                except Exception:
-                                    pass
+                                # Legacy cleanup: wipe every .png in cwd. This is
+                                # destructive across tasks and workers (it deleted
+                                # git-tracked figures), so outside legacy mode the
+                                # sweep is scoped per task inside run_single_task.
+                                if ws_mod.workspace_mode() == ws_mod.MODE_LEGACY:
+                                    try:
+                                        for p in Path(".").iterdir():
+                                            if (
+                                                p.is_file()
+                                                and p.suffix.lower() == ".png"
+                                                and p.name not in ws_mod._CWD_PROTECTED
+                                            ):
+                                                try:
+                                                    p.unlink()
+                                                except Exception:
+                                                    pass
+                                    except Exception:
+                                        pass
                             break  # success
-                        except Exception:
+                        except Exception as exc:
                             attempt += 1
                             if attempt <= 1:
                                 await asyncio.sleep(2.0)
                                 continue
-                            # requeue for another client to take over
-                            task_queue.put_nowait(task)
+                            tid = task.get("id")
+                            seen = requeue_counts.get(tid, 0)
+                            if seen < max_requeue:
+                                requeue_counts[tid] = seen + 1
+                                task_queue.put_nowait(task)
+                                break
+                            # Budget exhausted: persist an error record so the task
+                            # is accounted for instead of silently stalling the run.
+                            await _record_task_error(task, exc)
                             break
                 finally:
                     task_queue.task_done()

@@ -1,13 +1,20 @@
+#!/usr/bin/env bash
+
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")"/.. >/dev/null 2>&1 && pwd)"
 ENV_FILE="$SCRIPT_DIR/.env"
 
 set -a
-source "$ENV_FILE"
+# shellcheck disable=SC1090
+[ -f "$ENV_FILE" ] && source "$ENV_FILE"
 set +a
 
+if [[ "${M3_SKIP_CONDA:-0}" != "1" ]] && command -v conda >/dev/null 2>&1; then
+  # shellcheck disable=SC1091
+  source "$(conda info --base)/etc/profile.d/conda.sh"
+  conda activate "${M3_CONDA_ENV:-mcp_app}"
+fi
 
-source ~/.bashrc
-conda activate mcp_app
+cd "$SCRIPT_DIR"
 
 # Model list for batch evaluation (add/remove as needed)
 experiment_names=(
@@ -28,7 +35,7 @@ experiment_names=(
 )
 
 # Fixed GT input path (repo-relative)
-GT_PATH="$SCRIPT_DIR/json/test_mcp_GT.json"
+GT_PATH="json/test_mcp_GT.json"
 
 
 JUDGE_MODELS_CSV="gpt-5-mini,gemini-2.5-flash,deepseek-chat,grok-4-fast-reasoning"
@@ -47,7 +54,7 @@ for experiment_name in "${experiment_names[@]}"; do
   fi
 
   echo "[EVAL START] experiment_name=$experiment_name"
-  python3 "$SCRIPT_DIR/evaluate_final.py" \
+  python3 "evaluate_final.py" \
     --gt "$GT_PATH" \
     --pred "$PRED_PATH" \
     --judge-models "$JUDGE_MODELS_CSV" \

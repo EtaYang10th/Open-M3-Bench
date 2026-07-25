@@ -1,0 +1,5 @@
+mcp>=1.2
+ultralytics>=8.3,<9
+pillow>=10
+opencv-python>=4.8
+numpy<2.3

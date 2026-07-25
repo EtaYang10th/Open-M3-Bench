@@ -12,10 +12,23 @@ if [[ -f "$ENV_FILE" ]]; then
   set +a
 fi
 
-source ~/.bashrc
-conda activate mcp_app
+# Activate the conda env. Override the name with M3_CONDA_ENV, skip with M3_SKIP_CONDA=1.
+if [[ "${M3_SKIP_CONDA:-0}" != "1" ]] && command -v conda >/dev/null 2>&1; then
+  # shellcheck disable=SC1091
+  source "$(conda info --base)/etc/profile.d/conda.sh"
+  conda activate "${M3_CONDA_ENV:-mcp_app}"
+fi
 
-find ./media -mindepth 1 -delete
+# Run from the repo root so all repo-relative paths below resolve.
+cd "$SCRIPT_DIR"
+
+# NOTE: do NOT wipe ./media here -- it holds the benchmark images themselves.
+# To clear only the redundant working copies, use:
+#   python tools/clean_media.py --dry-run   (then --apply --yes)
+
+# Image root for the task images. Repo-relative by default; override with
+#   M3_IMAGE_DIR=/path/to/images bash scripts/benchmark_fuzzy.sh
+IMAGE_DIR="${M3_IMAGE_DIR:-media}"
 
 
 
@@ -41,15 +54,15 @@ for experiment_name in "${experiment_names[@]}"; do
   base_model_name=$(basename "$experiment_name")
   echo "[BENCH START] model=$experiment_name"
 
-  python "$SCRIPT_DIR/benchmark_pipeline.py" \
+  python "benchmark_pipeline.py" \
           --MODEL_PATH "$experiment_name" \
           --TOP_TOOLS 400 \
           --max_step  6 \
           --max_concurrent 10 \
           --num_client 5 \
           --max_new_tokens 32768 \
-          --image_dir "/common/users/yz1403/Projects/Datasets/LLM-MCP" \
-          --annotation_dir "$SCRIPT_DIR/json/tasks_fuzzy.json" \
+          --image_dir "$IMAGE_DIR" \
+          --annotation_dir "json/test_mcp_fuzzy.json" \
           --OUTPUT_DIR ${base_model_name}_test_mcp_fuzzy.json \
           --fuzzy
 

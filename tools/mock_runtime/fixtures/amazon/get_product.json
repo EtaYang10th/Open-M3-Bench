@@ -1,0 +1,7 @@
+[
+  {
+    "_comment": "Sample curated fixture. get_product is NOT used by any GT task; kept as a shape reference. Non-matching args fall through to the LLM simulator.",
+    "arguments": {"asin": "B00J2S5X9K", "amazon_domain": "amazon.com"},
+    "result": "**Pepsi Cola Soda Pop, 20 oz Bottle**\nhttps://www.amazon.com/dp/B00J2S5X9K\nhttps://m.media-amazon.com/images/I/61pepsi20oz.jpg\nPrice: $2.49\n\nFeatures:\n- 20 fl oz single bottle\n- Classic Pepsi cola flavor"
+  }
+]

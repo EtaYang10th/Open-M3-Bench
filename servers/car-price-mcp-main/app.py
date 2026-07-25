@@ -1,12 +1,71 @@
+import os
 import requests
 
-API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI1NDYzYjFlMy04NGJlLTQyYWEtYTI1ZC1kMTg1YjlmNTY0MzMiLCJlbWFpbCI6Im16NzUxQHNjYXJsZXRtYWlsLnJ1dGdlcnMuZWR1IiwiaWF0IjoxNzYzMDgwMTc1fQ.7lMR72IjuQDwE_eQJ9QIqneLcglMoD2AcZlz8HPa1wo"
+# Read the FIPE bearer token from the environment (see .env: CAR_API_KEY).
+# Never hardcode credentials in source that gets pushed to a remote.
+API_KEY = os.getenv("CAR_API_KEY", "")
 
-BASE_URL = "https://api.fipe.online/api/v1"
-HEADERS = {
-    "Authorization": f"Bearer {API_KEY}",
-    "Accept": "application/json"
-}
+# Default to the free, no-auth parallelum FIPE mirror. Only attach a Bearer
+# token when CAR_API_KEY is actually set (fipe.online requires one; parallelum
+# does not and rejects stale tokens with 401).
+BASE_URL = os.getenv("FIPE_API_URL", "https://parallelum.com.br/fipe/api/v1")
+HEADERS = {"Accept": "application/json"}
+# Only fipe.online requires a Bearer token; parallelum is free/no-auth and
+# rejects stray tokens with 401. Attach auth only for the fipe.online host.
+if API_KEY and "fipe.online" in BASE_URL:
+    HEADERS["Authorization"] = f"Bearer {API_KEY}"
+
+import json as _json
+import time as _time
+from pathlib import Path as _Path
+
+# Local cache for准静态 FIPE data (brands/models/prices). Isolated + git-ignored.
+_CACHE_DIR = _Path(__file__).resolve().parents[2] / "tools" / "mock_runtime" / "cache" / "_fipe_http"
+_CACHE_TTL = int(os.getenv("CAR_CACHE_TTL", "604800"))  # 7 days
+
+
+def _cache_get(url):
+    fp = _CACHE_DIR / (str(abs(hash(url))) + ".json")
+    if fp.exists() and (_time.time() - fp.stat().st_mtime) < _CACHE_TTL:
+        try:
+            return _json.loads(fp.read_text(encoding="utf-8"))
+        except Exception:
+            return None
+    return None
+
+
+def _cache_put(url, data):
+    try:
+        _CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        (_CACHE_DIR / (str(abs(hash(url))) + ".json")).write_text(
+            _json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    except Exception:
+        pass
+
+
+def cached_get_json(url, *, max_retries=4, base_delay=2.0, timeout=10):
+    """Cache-first GET with exponential backoff on 429/5xx. Returns parsed JSON
+    or None. Cache makes准静态 price data resilient to free-tier throttling."""
+    cached = _cache_get(url)
+    if cached is not None:
+        return cached
+    delay = base_delay
+    for attempt in range(1, max_retries + 1):
+        try:
+            resp = requests.get(url, headers=HEADERS, timeout=timeout)
+            if resp.status_code == 200:
+                data = resp.json()
+                _cache_put(url, data)
+                return data
+            if resp.status_code == 429 or resp.status_code >= 500:
+                _time.sleep(delay)
+                delay *= 2
+                continue
+            return None
+        except requests.RequestException:
+            _time.sleep(delay)
+            delay *= 2
+    return None
 
 
 # ------------------------------
@@ -18,14 +77,10 @@ def getCarBrands() -> str:
     """
     try:
         url = f"{BASE_URL}/carros/marcas"
-        resp = requests.get(url, headers=HEADERS, timeout=10)
+        brands = cached_get_json(url)
 
-        if resp.status_code != 200:
-            return f"Error: Could not fetch car brands (Status: {resp.status_code})"
-
-        brands = resp.json()
         if not brands:
-            return "No car brands found"
+            return "Error: Could not fetch car brands (rate-limited or empty after retries)"
 
         formatted = "Car Brands Available\n\n"
         for b in brands[:20]:
@@ -49,11 +104,9 @@ def searchBrandModelPrice(brand_name: str, model_keyword: str) -> str:
     try:
         # Step 1: get all brands
         url = f"{BASE_URL}/carros/marcas"
-        resp = requests.get(url, headers=HEADERS, timeout=10)
-        if resp.status_code != 200:
-            return f"Error: could not fetch brands (status {resp.status_code})"
-
-        brands = resp.json()
+        brands = cached_get_json(url)
+        if not brands:
+            return "Error: could not fetch brands (rate-limited or empty after retries)"
 
         # Step 2: find brand
         brand_lower = brand_name.lower()
@@ -70,8 +123,8 @@ def searchBrandModelPrice(brand_name: str, model_keyword: str) -> str:
 
         # Step 3: get all models under this brand
         url = f"{BASE_URL}/carros/marcas/{brand_code}/modelos"
-        resp = requests.get(url, headers=HEADERS, timeout=10)
-        modelos = resp.json().get("modelos", [])
+        _mres = cached_get_json(url) or {}
+        modelos = _mres.get("modelos", [])
         if not modelos:
             return f"No models found for brand '{target_brand['nome']}'."
 
@@ -94,8 +147,7 @@ def searchBrandModelPrice(brand_name: str, model_keyword: str) -> str:
 
             # fetch years
             url = f"{BASE_URL}/carros/marcas/{brand_code}/modelos/{model_code}/anos"
-            resp = requests.get(url, headers=HEADERS, timeout=10)
-            anos = resp.json()
+            anos = cached_get_json(url)
 
             if not anos:
                 result += f"{idx}. {chosen['nome']} — No year data.\n\n"
@@ -105,12 +157,10 @@ def searchBrandModelPrice(brand_name: str, model_keyword: str) -> str:
 
             # fetch price
             price_url = f"{BASE_URL}/carros/marcas/{brand_code}/modelos/{model_code}/anos/{latest_year}"
-            resp = requests.get(price_url, headers=HEADERS, timeout=10)
-            if resp.status_code != 200:
+            price = cached_get_json(price_url)
+            if not price:
                 result += f"{idx}. {chosen['nome']} — Price unavailable.\n\n"
                 continue
-
-            price = resp.json()
 
             # append formatted result
             result += (

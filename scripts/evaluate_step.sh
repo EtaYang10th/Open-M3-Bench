@@ -1,9 +1,13 @@
+#!/usr/bin/env bash
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")"/.. >/dev/null 2>&1 && pwd)"
 echo "SCRIPT_DIR: $SCRIPT_DIR"
 
-source ~/.bashrc
-conda activate mcp_app
+if [[ "${M3_SKIP_CONDA:-0}" != "1" ]] && command -v conda >/dev/null 2>&1; then
+  # shellcheck disable=SC1091
+  source "$(conda info --base)/etc/profile.d/conda.sh"
+  conda activate "${M3_CONDA_ENV:-mcp_app}"
+fi
 
 
 # Model list (add/remove as needed)
@@ -85,4 +89,7 @@ for f in files:
 print(json.dumps(data, indent=2))" > "$METRICS_FILE"
 
 echo "Plotting results..."
-python "tools/plot_tau_metrics.py"
+[ -f "tools/plot_tau_metrics.py" ] && python "tools/plot_tau_metrics.py"
+
+# Step-level summary figure used by the README (writes save/*.pdf + images/*.png).
+[ -f "tools/fig_step_eval_result.py" ] && python "tools/fig_step_eval_result.py"

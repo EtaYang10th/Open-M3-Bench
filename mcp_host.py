@@ -7,11 +7,28 @@ from contextlib import AsyncExitStack
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
+try:
+    # Optional, default-OFF local fallback (enable via env M3_MOCK_FALLBACK=1)
+    from tools.mock_fallback import try_fallback, looks_like_error, mock_enabled
+except Exception:  # keep host usable even if module is missing
+    def mock_enabled():
+        return False
+    def looks_like_error(_r):
+        return False
+    def try_fallback(_s, _t, _a):
+        return False, None
+
 class MCPHost:
     """Manage multiple MCP server sessions via stdio; cache tool schemas; route calls."""
-    def __init__(self, config_path: Path):
+    def __init__(self, config_path: Path, call_timeout: float = 60.0):
         self.config_path = Path(config_path)
         self.cfg = json.loads(self.config_path.read_text(encoding="utf-8"))
+        # Per-tool-call timeout (seconds). Env M3_TOOL_CALL_TIMEOUT overrides the
+        # default so a non-returning MCP tool cannot hang the whole batch.
+        try:
+            self.call_timeout = float(os.environ.get("M3_TOOL_CALL_TIMEOUT", call_timeout))
+        except (TypeError, ValueError):
+            self.call_timeout = call_timeout
         self.exit_stack = AsyncExitStack()
         self.sessions: Dict[str, ClientSession] = {}
         # qualified tool name -> (server, tool_name, description, inputSchema)
@@ -53,9 +70,20 @@ class MCPHost:
         server, tool = self.tools[qualified_name][0], self.tools[qualified_name][1]
         session = self.sessions[server]
         try:
-            result = await session.call_tool(tool, arguments)
+            result = await asyncio.wait_for(
+                session.call_tool(tool, arguments), timeout=self.call_timeout
+            )
         except asyncio.TimeoutError:
-            raise TimeoutError(f"Tool call timed out: {qualified_name} (> {timeout}s)")
+            raise TimeoutError(
+                f"Tool call timed out: {qualified_name} > {self.call_timeout}s"
+            )
+        except Exception as e:
+            # Real call raised: try local fallback before propagating.
+            if mock_enabled():
+                served, payload = try_fallback(server, tool, arguments or {})
+                if served:
+                    return payload
+            raise e
 
         bundle = {"text_parts": [], "json_parts": [], "images": []}
         for c in (result.content or []):
@@ -70,8 +98,16 @@ class MCPHost:
 
         # If there is only text, return plain text for compatibility; otherwise return JSON string
         if bundle["json_parts"] or bundle["images"]:
-            return json.dumps(bundle, ensure_ascii=False)
-        return "\n".join(bundle["text_parts"]) if bundle["text_parts"] else "[no textual content]"
+            out = json.dumps(bundle, ensure_ascii=False)
+        else:
+            out = "\n".join(bundle["text_parts"]) if bundle["text_parts"] else "[no textual content]"
+
+        # Real call "succeeded" but returned an error-shaped payload -> try fallback.
+        if mock_enabled() and looks_like_error(out):
+            served, payload = try_fallback(server, tool, arguments or {})
+            if served:
+                return payload
+        return out
 
     def select_tools_for(self, user_query: str, k: int = 6) -> List[str]:
         """Very simple lexical selection: choose top-K tools by name/desc token overlap."""

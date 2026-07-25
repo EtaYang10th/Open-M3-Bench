@@ -12,29 +12,12 @@
       "env": {}
     },
     "ocr": {
-      "_comment": "OCR service, image to text",
+      "_comment": "OCR service, image to text (local repo server; replaces pip mcp_ocr whose ErrorData positional-arg calls crash on installed mcp/pydantic)",
       "command": "python",
-      "args": ["-m", "mcp_ocr"],
+      "args": ["servers/ocr_mcp.py"],
       "env": {
       }
       },
-    "yolo-service": {
-      "_comment": "yolo service, object detection",
-      "command": "servers/yolo-mcp-service/.venv/bin/python",
-      "args": [
-        "servers/yolo-mcp-service/server.py"
-      ],
-      "env": {},
-      "disabled": true
-      },
-    "vllm-mcp": {
-      "command": "servers/vllm-mcp/.venv/bin/python",
-      "args": ["-m", "vllm_mcp.server"],
-      "disabled": true,
-      "env": {
-        "PYTHONPATH": "servers/vllm-mcp/src"
-      }
-    },
     "amazon": {
       "command": "python",
       "args": ["servers/amazon_mcp.py"],
@@ -94,12 +77,20 @@
       "disabled": false
     },
     "dinox-mcp": {
+      "_comment": "DISABLED: replaced by mcp-yolo (local Ultralytics YOLO + YOLO-World). See servers/mcp-yolo/README.md.",
       "command": "node",
       "args": ["servers/DINO-X-MCP/build/index.js"],
-      "disabled": false,
+      "disabled": true,
       "env": {
         "IMAGE_STORAGE_DIRECTORY": "media"
       }
+    },
+    "mcp-yolo": {
+      "_comment": "Local DINO-X drop-in: same tool names (detect-all-objects, detect-objects-by-text) via Ultralytics YOLO / YOLO-World. No cloud key / quota.",
+      "command": "servers/mcp-yolo/.venv/bin/python",
+      "args": ["servers/mcp-yolo/server.py"],
+      "disabled": false,
+      "env": {}
     },
     "linkimage-mcp": {
       "_comment": "Fetch and extract main image from a webpage URL",
@@ -114,7 +105,8 @@
       "env": {}
     },
     "ppt": {
-      "command": "python",
+      "_comment": "Uses its own venv so python-pptx is available and `from tools import ...` resolves inside the server directory.",
+      "command": "servers/Office-PowerPoint-MCP-Server/.venv/bin/python",
       "args": ["servers/Office-PowerPoint-MCP-Server/ppt_mcp_server.py"],
       "env": {
         "OUTPUT_DIR": "./media",
@@ -202,7 +194,7 @@
     },
     "yahoo-finance": {
       "_comment": "Yahoo Finance MCP Server — provides stock prices, financial statements, holders, options, and recommendations via yfinance API",
-      "command": "python",
+      "command": "servers/yahoo-finance/.venv/bin/python",
       "args": ["servers/yahoo.py"],
       "env": {},
       "disabled": false

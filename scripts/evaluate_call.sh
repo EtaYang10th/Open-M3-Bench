@@ -7,8 +7,13 @@ set -a
 [ -f "$ENV_FILE" ] && source "$ENV_FILE"
 set +a
 
-source ~/.bashrc
-conda activate mcp_app
+if [[ "${M3_SKIP_CONDA:-0}" != "1" ]] && command -v conda >/dev/null 2>&1; then
+  # shellcheck disable=SC1091
+  source "$(conda info --base)/etc/profile.d/conda.sh"
+  conda activate "${M3_CONDA_ENV:-mcp_app}"
+fi
+
+cd "$SCRIPT_DIR"
 
 # Model list (adjust as needed)
 experiment_names=(
@@ -60,8 +65,13 @@ for experiment_name in "${experiment_names[@]}"; do
 done
 
 
-# Draw pie charts for all models (PDF)
-echo "[SUMMARY] Plot pie charts PDF for all models"
-python3 "$SCRIPT_DIR/tools/plot_call_pies.py" --results-root "results"
+# Draw one donut per model (PDF under save/, plus a PNG for the README).
+# Guarded so a missing plotting script never fails the whole evaluation run.
+if [ -f "$SCRIPT_DIR/tools/plot_call_pies.py" ]; then
+  echo "[SUMMARY] Plot pie charts for all models"
+  python3 "$SCRIPT_DIR/tools/plot_call_pies.py" --results-root "results"
+else
+  echo "[SKIP] tools/plot_call_pies.py not found; skipping the summary figure."
+fi
 
 

@@ -7,11 +7,15 @@ set -a
 source "$ENV_FILE"
 set +a
 
-source ~/.bashrc
-conda activate mcp_app
+if [[ "${M3_SKIP_CONDA:-0}" != "1" ]] && command -v conda >/dev/null 2>&1; then
+  # shellcheck disable=SC1091
+  source "$(conda info --base)/etc/profile.d/conda.sh"
+  conda activate "${M3_CONDA_ENV:-mcp_app}"
+fi
 
+cd "$SCRIPT_DIR"
 
-python "$SCRIPT_DIR/app_mm.py" --MODEL_PATH       gpt-5 \
+python "app_mm.py" --MODEL_PATH       gpt-5 \
                  --max_step         3 \
                  --max_concurrent   5 \
                  --TOP_TOOLS        400 \

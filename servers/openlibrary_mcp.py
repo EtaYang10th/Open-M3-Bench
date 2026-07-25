@@ -24,7 +24,9 @@ server = FastMCP("openlibrary")
 # ------------------------------------------------------------
 _session = requests.Session()
 _session.headers.update({
-    "User-Agent": "mcp-openlibrary/1.0 (eta@rutgers.edu)",
+    # OpenLibrary asks for a contact in the UA string.
+    # Replace the placeholder below with your own repo/email before heavy use.
+    "User-Agent": "M3-Bench-mcp-openlibrary/1.0 (https://github.com/EtaYang10th/Open-M3-Bench)",
     "Accept": "application/json",
 })
 _retry = Retry(

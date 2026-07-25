@@ -1,5 +1,6 @@
 # servers/air_quality_mcp.py
-import os, json
+import os, json, base64
+from datetime import datetime, timedelta, timezone
 from typing import Dict, Any, Optional
 import httpx
 from mcp.server.fastmcp import FastMCP
@@ -50,9 +51,21 @@ async def forecast(lat: float, lng: float, hours: Optional[int] = None) -> Dict[
     """
     url = f"{BASE}/forecast:lookup"
     params = {"key": API_KEY}
-    body = {"location": {"latitude": lat, "longitude": lng}}
-    if hours:
-        body["hours"] = hours
+    body: Dict[str, Any] = {"location": {"latitude": lat, "longitude": lng}}
+    # New Air Quality API forecast:lookup no longer accepts a top-level `hours`.
+    # Convert the requested `hours` into a `period` (startTime/endTime, ISO-8601 UTC).
+    span = hours if hours else 24
+    span = max(1, min(int(span), 96))
+    # Forecast requires the time range to be at least one rounded hour into the
+    # future; the API rounds timestamps down to the hour, so start at the next
+    # whole hour to keep the whole period in the future.
+    now = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
+    start = now + timedelta(hours=1)
+    end = start + timedelta(hours=span)
+    body["period"] = {
+        "startTime": start.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "endTime": end.strftime("%Y-%m-%dT%H:%M:%SZ"),
+    }
 
     resp = await CLIENT.post(url, params=params, json=body)
     resp.raise_for_status()
@@ -74,10 +87,10 @@ async def history(lat: float, lng: float, startTime: str, endTime: str) -> Dict[
     """
     url = f"{BASE}/history:lookup"
     params = {"key": API_KEY}
+    # New Air Quality API history:lookup requires the time range wrapped in `period`.
     body = {
         "location": {"latitude": lat, "longitude": lng},
-        "startTime": startTime,
-        "endTime": endTime,
+        "period": {"startTime": startTime, "endTime": endTime},
     }
 
     resp = await CLIENT.post(url, params=params, json=body)
@@ -103,7 +116,15 @@ async def heatmap_tile(z: int, x: int, y: int, indexType: str = "UNIVERSAL_AQI")
 
     resp = await CLIENT.get(url, params=params)
     resp.raise_for_status()
-    return resp.json()
+    # heatmapTiles returns a binary PNG tile, not JSON. Encode as base64.
+    return {
+        "contentType": resp.headers.get("content-type"),
+        "imageBase64": base64.b64encode(resp.content).decode("ascii"),
+        "z": z,
+        "x": x,
+        "y": y,
+        "indexType": indexType,
+    }
 
 
 if __name__ == "__main__":

@@ -1,22 +1,430 @@
 import os
 import re
+import json
 import base64
 import mimetypes
 from typing import Any, Dict, List, Tuple, Optional
 from openai import OpenAI  # type: ignore
 import requests
-import ipdb
+
+from .tool_schema import (
+    openai_tools_to_anthropic,
+    openai_tools_to_gemini_decls,
+)
+
+# Structured tool-call return type: list of {"name": <escaped>, "arguments": dict}
+ToolCall = Dict[str, Any]
+
+
+def _llm_timeout(default: float = 300.0) -> float:
+    """Per-request LLM timeout (seconds). Env M3_LLM_TIMEOUT overrides default.
+
+    Guards against endpoints (e.g. apicursor.com) that never return, which
+    would otherwise hang the whole benchmark batch.
+    """
+    try:
+        return float(os.environ.get("M3_LLM_TIMEOUT", default))
+    except (TypeError, ValueError):
+        return default
+
+
+def _llm_max_retries(default: int = 1) -> int:
+    """SDK-level retry budget for LLM HTTP calls (env M3_LLM_MAX_RETRIES).
+
+    The OpenAI SDK defaults to 2 retries and applies ``timeout`` *per attempt*,
+    so a stalled endpoint costs ``timeout * (1 + retries)`` plus backoff before
+    the caller ever sees an exception. Capping it keeps the wall clock bounded
+    and predictable. Set M3_LLM_MAX_RETRIES=2 to restore the SDK default.
+    """
+    try:
+        return max(0, int(os.environ.get("M3_LLM_MAX_RETRIES", default)))
+    except (TypeError, ValueError):
+        return default
+
+
+_LLM_STATS: Dict[str, Any] = {
+    "requests": 0,
+    "text_chars": 0,
+    "tools_chars": 0,
+    "image_inlines": 0,
+    "image_b64_chars": 0,
+    # path -> {"uploads": n, "b64_chars": total}
+    "image_by_path": {},
+}
+
+
+def _stats_enabled() -> bool:
+    return str(os.environ.get("M3_LLM_STATS", "0")).lower() not in ("", "0", "false", "no")
+
+
+def _stats_flush_every(default: int = 10) -> int:
+    """Flush the stats file every N requests. Env M3_LLM_STATS_FLUSH_EVERY."""
+    try:
+        return max(1, int(os.environ.get("M3_LLM_STATS_FLUSH_EVERY", default)))
+    except (TypeError, ValueError):
+        return default
+
+
+def _record_request(
+    messages: List[Dict[str, Any]], tools: Optional[List[Dict[str, Any]]] = None
+) -> None:
+    """Count one outgoing LLM request (opt-in via M3_LLM_STATS=1).
+
+    ``text_chars`` counts prompt text only; base64 image payloads are tracked
+    separately by :func:`_record_image_inline` so the two can be compared.
+    """
+    if not _stats_enabled():
+        return
+    n = 0
+    for m in messages or []:
+        c = m.get("content", "")
+        if isinstance(c, str):
+            n += len(c)
+        elif isinstance(c, list):
+            for part in c:
+                if isinstance(part, dict) and part.get("type") == "text":
+                    n += len(part.get("text") or "")
+    _LLM_STATS["requests"] += 1
+    _LLM_STATS["text_chars"] += n
+    _record_tools(tools)
+    if _LLM_STATS["requests"] % _stats_flush_every() == 0:
+        dump_llm_stats()
+
+
+def _record_tools(tools: Optional[List[Dict[str, Any]]]) -> None:
+    if not _stats_enabled() or not tools:
+        return
+    try:
+        _LLM_STATS["tools_chars"] += len(json.dumps(tools, ensure_ascii=False))
+    except Exception:
+        pass
+
+
+def _record_image_inline(data_url: str, path: str = "") -> None:
+    if not _stats_enabled() or not data_url:
+        return
+    _LLM_STATS["image_inlines"] += 1
+    _LLM_STATS["image_b64_chars"] += len(data_url)
+    slot = _LLM_STATS["image_by_path"].setdefault(
+        os.path.basename(path) or "?", {"uploads": 0, "b64_chars": 0}
+    )
+    slot["uploads"] += 1
+    slot["b64_chars"] += len(data_url)
+
+
+def dump_llm_stats() -> None:
+    """Write collected stats to M3_LLM_STATS_FILE (JSON), if configured.
+
+    Written atomically and called both periodically (from ``_record_request``)
+    and at exit, because a batch killed by SIGTERM/SIGKILL never runs atexit
+    handlers and would otherwise lose every counter it collected.
+    """
+    if not _stats_enabled():
+        return
+    path = os.environ.get("M3_LLM_STATS_FILE")
+    if not path:
+        return
+    try:
+        tmp = f"{path}.tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(_LLM_STATS, f, ensure_ascii=False, indent=2)
+        os.replace(tmp, path)
+    except Exception:
+        pass
+
+
+import atexit as _atexit
+
+_atexit.register(dump_llm_stats)
+
 
 class BaseAPIClient:
     def generate_once(self, messages: List[Dict[str, str]]) -> Tuple[str, str]:
         raise NotImplementedError
+
+    def supports_native_tools(self) -> bool:
+        """Whether this client can do provider-native function/tool calling."""
+        return False
+
+    def generate_with_tools(
+        self,
+        messages: List[Dict[str, str]],
+        tools: List[Dict[str, Any]],
+        tool_choice: str = "auto",
+    ) -> Tuple[str, List[ToolCall]]:
+        """Native tool-calling round-trip.
+
+        ``tools`` is an OpenAI-style function-schema list whose function names
+        are already escaped (see ``models.tool_schema``). Returns
+        ``(visible_text, tool_calls)`` where each tool call is
+        ``{"name": <escaped fn name>, "arguments": <dict>}``.
+        Callers restore the qualified MCP name via the escaped->qualified map.
+        """
+        raise NotImplementedError
+
+
+def _extract_image_paths(msgs: List[Dict[str, str]]) -> List[str]:
+    """Collect ``file=<abs path>`` marked images, deduplicated in first-seen order.
+
+    The same path legitimately appears in several messages (the initial user
+    message plus every round's image hint). Deduplication keeps one inline copy
+    per request; first-seen order keeps the prefix stable across rounds, which
+    matters for provider-side prompt caching.
+    """
+    paths: List[str] = []
+    seen: set = set()
+    file_re = re.compile(r"file=([^\s]+)")
+    for m in msgs:
+        content = m.get("content", "") or ""
+        if not isinstance(content, str):
+            continue
+        for match in file_re.findall(content):
+            if match in seen:
+                continue
+            if os.path.isabs(match) and os.path.exists(match):
+                seen.add(match)
+                paths.append(match)
+    return paths
+
+
+_IMAGE_MAGIC = (
+    (b"\x89PNG\r\n\x1a\n", "image/png"),
+    (b"\xff\xd8\xff", "image/jpeg"),
+    (b"GIF87a", "image/gif"),
+    (b"GIF89a", "image/gif"),
+    (b"BM", "image/bmp"),
+)
+
+
+def _image_max_edge() -> int:
+    """Longest edge (px) for images sent to the LLM. 0 disables downscaling.
+
+    Only the copy sent to the model is resized; files on disk stay untouched so
+    MCP tools keep operating on the originals. Every request re-uploads the full
+    base64 payload, so a 2.4 MB source image costs ~3.2 M characters per round.
+    """
+    try:
+        return max(0, int(os.environ.get("M3_IMAGE_MAX_EDGE", 1568)))
+    except (TypeError, ValueError):
+        return 1568
+
+
+def _image_recode_over_kb() -> int:
+    """Re-encode images larger than this (KB) as JPEG. 0 disables.
+
+    Most benchmark PNGs are stored at 2-3 bytes/pixel (essentially
+    uncompressed), so they stay huge even when their dimensions are modest and
+    resizing alone does not help. Re-encoding preserves the pixel grid.
+    """
+    try:
+        return max(0, int(os.environ.get("M3_IMAGE_RECODE_OVER_KB", 512)))
+    except (TypeError, ValueError):
+        return 512
+
+
+def _maybe_downscale(raw: bytes, mime: str) -> Tuple[bytes, str]:
+    """Shrink an oversized image for transport, or return it unchanged."""
+    limit = _image_max_edge()
+    recode_over = _image_recode_over_kb() * 1024
+    if mime == "image/gif" or (not limit and not recode_over):
+        return raw, mime
+    try:
+        from PIL import Image
+        import io
+
+        img = Image.open(io.BytesIO(raw))
+        oversized = bool(limit) and max(img.size) > limit
+        heavy = bool(recode_over) and len(raw) > recode_over
+        if not oversized and not heavy:
+            return raw, mime
+        if oversized:
+            img.thumbnail((limit, limit))
+        if heavy:
+            if img.mode in ("RGBA", "LA", "P"):
+                img = img.convert("RGB")
+            buf = io.BytesIO()
+            img.save(buf, format="JPEG", quality=88, optimize=True)
+            out = buf.getvalue()
+            return (out, "image/jpeg") if len(out) < len(raw) else (raw, mime)
+        if img.mode in ("RGBA", "LA", "P") and mime != "image/png":
+            img = img.convert("RGB")
+        buf = io.BytesIO()
+        fmt = "PNG" if mime == "image/png" else "JPEG"
+        img.save(buf, format=fmt, **({"quality": 90} if fmt == "JPEG" else {}))
+        return buf.getvalue(), ("image/png" if fmt == "PNG" else "image/jpeg")
+    except Exception:
+        return raw, mime
+
+
+def guess_media_type(path: str, head: Optional[bytes] = None) -> str:
+    """Media type from the file's magic bytes, falling back to its extension.
+
+    Several benchmark images carry a ``.png`` name while holding JPEG or WebP
+    data. Trusting the extension makes providers that validate the declared
+    media type (Anthropic) reject the request with a 400 that no retry can fix,
+    so the bytes win whenever they identify a known format.
+    """
+    try:
+        if head is None:
+            with open(path, "rb") as f:
+                head = f.read(16)
+        for sig, mime in _IMAGE_MAGIC:
+            if head.startswith(sig):
+                return mime
+        if head[:4] == b"RIFF" and head[8:12] == b"WEBP":
+            return "image/webp"
+    except Exception:
+        pass
+    mime, _ = mimetypes.guess_type(path)
+    return mime or "application/octet-stream"
+
+
+def _file_to_data_url(path: str) -> Optional[str]:
+    try:
+        with open(path, "rb") as f:
+            b = f.read()
+        mime = guess_media_type(path, b[:16])
+        b, mime = _maybe_downscale(b, mime)
+        b64 = base64.b64encode(b).decode("ascii")
+        return f"data:{mime};base64,{b64}"
+    except Exception:
+        return None
+
+
+def _messages_to_chat(messages: List[Dict[str, str]]) -> List[Dict[str, Any]]:
+    """Filter to system/user/assistant text messages, injecting images (OpenAI parts)."""
+    out: List[Dict[str, Any]] = []
+    for m in messages:
+        role = m.get("role")
+        if role in ("system", "user", "assistant"):
+            out.append({"role": role, "content": m.get("content", "")})
+    image_paths = _extract_image_paths(messages)
+    if image_paths:
+        last_user_idx = None
+        for i in range(len(out) - 1, -1, -1):
+            if out[i].get("role") == "user":
+                last_user_idx = i
+                break
+        if last_user_idx is None:
+            out.append({"role": "user", "content": ""})
+            last_user_idx = len(out) - 1
+        user_text = out[last_user_idx].get("content", "") or ""
+        parts: List[Dict[str, Any]] = []
+        if user_text:
+            parts.append({"type": "text", "text": user_text})
+        for p in image_paths:
+            data_url = _file_to_data_url(p)
+            if data_url:
+                _record_image_inline(data_url, p)
+                parts.append({"type": "image_url", "image_url": {"url": data_url}})
+        out[last_user_idx]["content"] = parts
+    return out
+
+
+def _openai_chat_tool_call(
+    client: "OpenAI",
+    model_name: str,
+    messages: List[Dict[str, str]],
+    tools: List[Dict[str, Any]],
+    tool_choice: str = "auto",
+    max_tokens: Optional[int] = None,
+    stream: bool = False,
+) -> Tuple[str, List[ToolCall]]:
+    """Shared OpenAI-compatible chat.completions native tool-calling round-trip."""
+    chat_messages = _messages_to_chat(messages)
+    _record_request(chat_messages, tools)
+    kwargs: Dict[str, Any] = {
+        "model": model_name,
+        "messages": chat_messages,
+        "tools": tools,
+        "tool_choice": tool_choice if tools else "none",
+        "stream": stream,
+    }
+    if max_tokens is not None:
+        kwargs["max_tokens"] = int(max_tokens)
+    timeout = _llm_timeout()
+    kwargs["timeout"] = timeout
+    if kwargs.get("stream"):
+        return _accumulate_stream_tool_calls(
+            client.chat.completions.create(**kwargs), timeout=timeout
+        )
+    resp = client.chat.completions.create(**kwargs)
+    msg = resp.choices[0].message
+    visible = (getattr(msg, "content", None) or "").strip()
+    calls: List[ToolCall] = []
+    for tc in (getattr(msg, "tool_calls", None) or []):
+        fn = getattr(tc, "function", None)
+        if fn is None:
+            continue
+        name = getattr(fn, "name", None) or ""
+        raw_args = getattr(fn, "arguments", None)
+        args = _parse_args(raw_args)
+        if name:
+            calls.append({"name": name, "arguments": args})
+    return visible, calls
+
+
+def _parse_args(raw_args: Any) -> Dict[str, Any]:
+    if isinstance(raw_args, dict):
+        return raw_args
+    try:
+        return json.loads(raw_args) if raw_args else {}
+    except Exception:
+        return {}
+
+
+def _accumulate_stream_tool_calls(
+    stream, timeout: Optional[float] = None
+) -> Tuple[str, List[ToolCall]]:
+    """Accumulate visible text and tool_calls from an OpenAI-style SSE stream.
+
+    Needed for endpoints (e.g. apicursor.com) that always stream, emitting
+    tool-call name/arguments across multiple delta chunks keyed by index.
+
+    A wall-clock ``timeout`` guards against streams that stall or never end
+    (the OpenAI SDK client timeout may not cover an idle SSE iteration).
+    """
+    import time as _time
+    _start = _time.monotonic()
+    text_parts: List[str] = []
+    # index -> {"name": str, "arguments": str}
+    acc: Dict[int, Dict[str, str]] = {}
+    for chunk in stream:
+        if timeout is not None and (_time.monotonic() - _start) > timeout:
+            raise TimeoutError(f"LLM stream timed out > {timeout}s")
+        try:
+            delta = chunk.choices[0].delta
+        except Exception:
+            continue
+        if delta is None:
+            continue
+        ct = getattr(delta, "content", None)
+        if ct:
+            text_parts.append(str(ct))
+        for tc in (getattr(delta, "tool_calls", None) or []):
+            idx = getattr(tc, "index", 0) or 0
+            slot = acc.setdefault(idx, {"name": "", "arguments": ""})
+            fn = getattr(tc, "function", None)
+            if fn is not None:
+                nm = getattr(fn, "name", None)
+                if nm:
+                    slot["name"] = nm
+                ar = getattr(fn, "arguments", None)
+                if ar:
+                    slot["arguments"] += ar
+    calls: List[ToolCall] = []
+    for idx in sorted(acc.keys()):
+        slot = acc[idx]
+        if slot["name"]:
+            calls.append({"name": slot["name"], "arguments": _parse_args(slot["arguments"])})
+    return "".join(text_parts).strip(), calls
 
 
 class OpenAIAPIClient(BaseAPIClient):
     def __init__(self, model_name: str, max_new_tokens: int = 32768) -> None:
         self.model_name = model_name
         self.max_new_tokens = max_new_tokens
-        self._client = OpenAI()
+        self._client = OpenAI(timeout=_llm_timeout(), max_retries=_llm_max_retries())
 
     def generate_once(self, messages: List[Dict[str, str]]) -> Tuple[str, str]:
 
@@ -38,10 +446,10 @@ class OpenAIAPIClient(BaseAPIClient):
 
         def _file_to_data_url(path: str) -> Optional[str]:
             try:
-                mime, _ = mimetypes.guess_type(path)
-                mime = mime or "application/octet-stream"
                 with open(path, "rb") as f:
                     b = f.read()
+                mime = guess_media_type(path, b[:16])
+                b, mime = _maybe_downscale(b, mime)
                 b64 = base64.b64encode(b).decode("ascii")
                 return f"data:{mime};base64,{b64}"
             except Exception:
@@ -90,6 +498,22 @@ class OpenAIAPIClient(BaseAPIClient):
         full = visible
         return visible, full
 
+    def supports_native_tools(self) -> bool:
+        return True
+
+    def generate_with_tools(
+        self,
+        messages: List[Dict[str, str]],
+        tools: List[Dict[str, Any]],
+        tool_choice: str = "auto",
+    ) -> Tuple[str, List[ToolCall]]:
+        # OpenAI chat.completions supports native tool calling uniformly.
+        # Omit max_tokens: reasoning models (gpt-5*) reject `max_tokens` here.
+        return _openai_chat_tool_call(
+            self._client, self.model_name, messages, tools, tool_choice,
+            max_tokens=None,
+        )
+
 
 class DeepseekAPIClient(BaseAPIClient):
     def __init__(self, model_name: str, max_new_tokens: int = 32768) -> None:
@@ -98,7 +522,10 @@ class DeepseekAPIClient(BaseAPIClient):
         api_key = os.environ.get("DEEPSEEK_API_KEY")
         if not api_key:
             raise RuntimeError("DEEPSEEK_API_KEY not set")
-        self._client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
+        self._client = OpenAI(
+            api_key=api_key, base_url="https://api.deepseek.com",
+            timeout=_llm_timeout(), max_retries=_llm_max_retries(),
+        )
 
     def generate_once(self, messages: List[Dict[str, str]]) -> Tuple[str, str]:
         chat_messages = []
@@ -114,6 +541,20 @@ class DeepseekAPIClient(BaseAPIClient):
         visible = resp.choices[0].message.content.strip()
         full = visible
         return visible, full
+
+    def supports_native_tools(self) -> bool:
+        return True
+
+    def generate_with_tools(
+        self,
+        messages: List[Dict[str, str]],
+        tools: List[Dict[str, Any]],
+        tool_choice: str = "auto",
+    ) -> Tuple[str, List[ToolCall]]:
+        return _openai_chat_tool_call(
+            self._client, self.model_name, messages, tools, tool_choice,
+            max_tokens=self.max_new_tokens,
+        )
 
 
 class InternAPIClient(BaseAPIClient):
@@ -150,10 +591,10 @@ class InternAPIClient(BaseAPIClient):
 
         def _file_to_data_url(path: str) -> Optional[str]:
             try:
-                mime, _ = mimetypes.guess_type(path)
-                mime = mime or "application/octet-stream"
                 with open(path, "rb") as f:
                     b = f.read()
+                mime = guess_media_type(path, b[:16])
+                b, mime = _maybe_downscale(b, mime)
                 b64 = base64.b64encode(b).decode("ascii")
                 return f"data:{mime};base64,{b64}"
             except Exception:
@@ -201,7 +642,9 @@ class InternAPIClient(BaseAPIClient):
         }
 
         url = f"{self._api_base}"
-        r = requests.post(url, headers=self._headers, json=payload)
+        # requests defaults to waiting forever; an unresponsive endpoint would
+        # hang the whole batch the way apicursor did on task 00240000.
+        r = requests.post(url, headers=self._headers, json=payload, timeout=_llm_timeout())
         r.raise_for_status()
         data = r.json()
         visible = data.get("choices", [{}])[0].get("message", {}).get("content", "")
@@ -248,10 +691,10 @@ class GeminiAPIClient(BaseAPIClient):
 
         def _read_file_bytes(path: str) -> Optional[Tuple[bytes, str]]:
             try:
-                mime, _ = mimetypes.guess_type(path)
-                mime = mime or "application/octet-stream"
                 with open(path, "rb") as f:
                     data = f.read()
+                mime = guess_media_type(path, data[:16])
+                data, mime = _maybe_downscale(data, mime)
                 return data, mime
             except Exception:
                 return None
@@ -315,6 +758,58 @@ class GeminiAPIClient(BaseAPIClient):
         full = visible
         return visible, full
 
+    def supports_native_tools(self) -> bool:
+        return True
+
+    def generate_with_tools(
+        self,
+        messages: List[Dict[str, str]],
+        tools: List[Dict[str, Any]],
+        tool_choice: str = "auto",
+    ) -> Tuple[str, List[ToolCall]]:
+        types = self._types
+        # Build a single text prompt from the conversation (same style as generate_once).
+        segments = [f"[{m.get('role')}] {m.get('content','')}" for m in messages
+                    if m.get("role") in ("system", "user", "assistant") and m.get("content")]
+        prompt_text = "\n".join(segments) or " "
+
+        decls = openai_tools_to_gemini_decls(tools)
+        tool_obj = types.Tool(function_declarations=decls)
+        mode = "ANY" if tool_choice == "required" else "AUTO"
+        try:
+            fcc = types.FunctionCallingConfig(mode=mode)
+            tool_cfg = types.ToolConfig(function_calling_config=fcc)
+            config = types.GenerateContentConfig(
+                tools=[tool_obj],
+                tool_config=tool_cfg,
+                max_output_tokens=int(self.max_new_tokens),
+            )
+        except Exception:
+            config = types.GenerateContentConfig(tools=[tool_obj])
+
+        resp = self._client.models.generate_content(
+            model=self.model_name,
+            contents=prompt_text,
+            config=config,
+        )
+        calls: List[ToolCall] = []
+        for fc in (getattr(resp, "function_calls", None) or []):
+            name = getattr(fc, "name", None) or ""
+            args = getattr(fc, "args", None) or {}
+            if not isinstance(args, dict):
+                try:
+                    args = dict(args)
+                except Exception:
+                    args = {}
+            if name:
+                calls.append({"name": name, "arguments": args})
+        visible = ""
+        try:
+            visible = getattr(resp, "text", None) or ""
+        except Exception:
+            visible = ""
+        return visible, calls
+
 
 class AnthropicAPIClient(BaseAPIClient):
     def __init__(self, model_name: str, max_new_tokens: int = 32768) -> None:
@@ -353,10 +848,11 @@ class AnthropicAPIClient(BaseAPIClient):
 
         def _image_block_from_path(path: str) -> Optional[Dict[str, Any]]:
             try:
-                mime, _ = mimetypes.guess_type(path)
-                media_type = mime or "image/png"
                 with open(path, "rb") as f:
-                    data = base64.b64encode(f.read()).decode("utf-8")
+                    raw = f.read()
+                media_type = guess_media_type(path, raw[:16])
+                raw, media_type = _maybe_downscale(raw, media_type)
+                data = base64.b64encode(raw).decode("utf-8")
                 return {
                     "type": "image",
                     "source": {
@@ -447,6 +943,56 @@ class AnthropicAPIClient(BaseAPIClient):
         full = visible
         return visible, full
 
+    def supports_native_tools(self) -> bool:
+        return True
+
+    def generate_with_tools(
+        self,
+        messages: List[Dict[str, str]],
+        tools: List[Dict[str, Any]],
+        tool_choice: str = "auto",
+    ) -> Tuple[str, List[ToolCall]]:
+        # Aggregate system text; keep only user/assistant turns as messages.
+        system_segments = [m.get("content", "") for m in messages
+                           if m.get("role") == "system" and m.get("content")]
+        system_text = "\n".join(system_segments)
+        payload_messages = [
+            {"role": m["role"], "content": m.get("content", "")}
+            for m in messages if m.get("role") in ("user", "assistant")
+        ]
+        if not payload_messages:
+            payload_messages = [{"role": "user", "content": system_text or " "}]
+        anth_tools = openai_tools_to_anthropic(tools)
+        kwargs: Dict[str, Any] = {
+            "model": self.model_name,
+            "max_tokens": int(self.max_new_tokens),
+            "messages": payload_messages,
+            "tools": anth_tools,
+        }
+        if system_text:
+            kwargs["system"] = system_text
+        if tool_choice == "required":
+            kwargs["tool_choice"] = {"type": "any"}
+        with self._client.messages.stream(**kwargs) as stream:  # type: ignore
+            stream.until_done()
+            resp = stream.get_final_message()
+        visible_parts: List[str] = []
+        calls: List[ToolCall] = []
+        for block in (getattr(resp, "content", []) or []):
+            btype = getattr(block, "type", None)
+            if btype == "text":
+                txt = getattr(block, "text", None)
+                if txt:
+                    visible_parts.append(str(txt))
+            elif btype == "tool_use":
+                name = getattr(block, "name", None) or ""
+                args = getattr(block, "input", None) or {}
+                if not isinstance(args, dict):
+                    args = {}
+                if name:
+                    calls.append({"name": name, "arguments": args})
+        return "".join(visible_parts).strip(), calls
+
 
 class TogetherAPIClient(BaseAPIClient):
     def __init__(self, model_name: str, max_new_tokens: int = 32768) -> None:
@@ -483,10 +1029,10 @@ class TogetherAPIClient(BaseAPIClient):
 
         def _file_to_data_url(path: str) -> Optional[str]:
             try:
-                mime, _ = mimetypes.guess_type(path)
-                mime = mime or "application/octet-stream"
                 with open(path, "rb") as f:
                     b = f.read()
+                mime = guess_media_type(path, b[:16])
+                b, mime = _maybe_downscale(b, mime)
                 b64 = base64.b64encode(b).decode("ascii")
                 return f"data:{mime};base64,{b64}"
             except Exception:
@@ -557,6 +1103,23 @@ class TogetherAPIClient(BaseAPIClient):
         visible = (resp.choices[0].message.content or "").strip()
         return visible, visible
 
+    def supports_native_tools(self) -> bool:
+        return True
+
+    def generate_with_tools(
+        self,
+        messages: List[Dict[str, str]],
+        tools: List[Dict[str, Any]],
+        tool_choice: str = "auto",
+    ) -> Tuple[str, List[ToolCall]]:
+        # Together SDK exposes an OpenAI-compatible chat.completions interface.
+        # Cap output tokens modestly; tool-call outputs are small and passing the
+        # full budget risks exceeding the model context window.
+        return _openai_chat_tool_call(
+            self._client, self.model_name, messages, tools, tool_choice,
+            max_tokens=min(4096, int(self.max_new_tokens)),
+        )
+
 
 class ZhipuAPIClient(BaseAPIClient):
     def __init__(self, model_name: str, max_new_tokens: int = 32768) -> None:
@@ -594,10 +1157,10 @@ class ZhipuAPIClient(BaseAPIClient):
             return paths
 
         def _file_to_data_url(path: str) -> Optional[str]:
-            mime, _ = mimetypes.guess_type(path)
-            mime = mime or "application/octet-stream"
             with open(path, "rb") as f:
                 b = f.read()
+            mime = guess_media_type(path, b[:16])
+            b, mime = _maybe_downscale(b, mime)
             b64 = base64.b64encode(b).decode("ascii")
             return f"data:{mime};base64,{b64}"
 
@@ -668,6 +1231,21 @@ class ZhipuAPIClient(BaseAPIClient):
         full = visible
         return visible, full
 
+    def supports_native_tools(self) -> bool:
+        return True
+
+    def generate_with_tools(
+        self,
+        messages: List[Dict[str, str]],
+        tools: List[Dict[str, Any]],
+        tool_choice: str = "auto",
+    ) -> Tuple[str, List[ToolCall]]:
+        # ZhipuAiClient exposes an OpenAI-compatible chat.completions with tools.
+        return _openai_chat_tool_call(
+            self._client, self.model_name, messages, tools, tool_choice,
+            max_tokens=None,
+        )
+
 class GrokAPIClient(BaseAPIClient):
     def __init__(self, model_name: str, max_new_tokens: int = 32768) -> None:
         """
@@ -687,7 +1265,10 @@ class GrokAPIClient(BaseAPIClient):
             raise RuntimeError("XAI_API_KEY / GROK_API_KEY not set")
 
         # xAI follows OpenAI SDK semantics; just change base_url
-        self._client = OpenAI(api_key=api_key, base_url="https://api.x.ai/v1")
+        self._client = OpenAI(
+            api_key=api_key, base_url="https://api.x.ai/v1",
+            timeout=_llm_timeout(), max_retries=_llm_max_retries(),
+        )
 
     def generate_once(self, messages: List[Dict[str, str]]) -> Tuple[str, str]:
         """
@@ -708,10 +1289,10 @@ class GrokAPIClient(BaseAPIClient):
 
         def _file_to_data_url(path: str) -> Optional[str]:
             try:
-                mime, _ = mimetypes.guess_type(path)
-                mime = mime or "application/octet-stream"
                 with open(path, "rb") as f:
                     b = f.read()
+                mime = guess_media_type(path, b[:16])
+                b, mime = _maybe_downscale(b, mime)
                 b64 = base64.b64encode(b).decode("ascii")
                 return f"data:{mime};base64,{b64}"
             except Exception:
@@ -764,3 +1345,82 @@ class GrokAPIClient(BaseAPIClient):
 
         visible = (resp.choices[0].message.content or "").strip()
         return visible, visible
+
+    def supports_native_tools(self) -> bool:
+        return True
+
+    def generate_with_tools(
+        self,
+        messages: List[Dict[str, str]],
+        tools: List[Dict[str, Any]],
+        tool_choice: str = "auto",
+    ) -> Tuple[str, List[ToolCall]]:
+        return _openai_chat_tool_call(
+            self._client, self.model_name, messages, tools, tool_choice,
+            max_tokens=self.max_new_tokens,
+        )
+
+
+class CursorAPIClient(BaseAPIClient):
+    """OpenAI-compatible client for a custom endpoint (e.g. apicursor.com).
+
+    Configured via env vars ``CURSOR_API_BASE_URL`` and ``CURSOR_API_KEY``.
+    Supports native tool calling through chat.completions. Used for models
+    routed with the ``cursor:`` prefix (see model_loader).
+    """
+
+    def __init__(self, model_name: str, max_new_tokens: int = 32768) -> None:
+        self.model_name = model_name
+        self.max_new_tokens = max_new_tokens
+        base_url = os.environ.get("CURSOR_API_BASE_URL")
+        api_key = os.environ.get("CURSOR_API_KEY")
+        if not base_url:
+            raise RuntimeError("CURSOR_API_BASE_URL not set")
+        if not api_key:
+            raise RuntimeError("CURSOR_API_KEY not set")
+        # Client-level timeout so a non-returning endpoint can't hang forever.
+        self._client = OpenAI(
+            api_key=api_key, base_url=base_url,
+            timeout=_llm_timeout(), max_retries=_llm_max_retries(),
+        )
+
+    def generate_once(self, messages: List[Dict[str, str]]) -> Tuple[str, str]:
+        # This endpoint streams responses; accumulate the text deltas.
+        chat_messages = _messages_to_chat(messages)
+        _record_request(chat_messages)
+        _timeout = _llm_timeout()
+        stream = self._client.chat.completions.create(
+            model=self.model_name,
+            messages=chat_messages,
+            max_tokens=int(self.max_new_tokens),
+            stream=True,
+            timeout=_timeout,
+        )
+        import time as _time
+        _start = _time.monotonic()
+        parts: List[str] = []
+        for chunk in stream:
+            if (_time.monotonic() - _start) > _timeout:
+                raise TimeoutError(f"LLM stream timed out > {_timeout}s")
+            try:
+                ct = chunk.choices[0].delta.content
+            except Exception:
+                ct = None
+            if ct:
+                parts.append(str(ct))
+        visible = "".join(parts).strip()
+        return visible, visible
+
+    def supports_native_tools(self) -> bool:
+        return True
+
+    def generate_with_tools(
+        self,
+        messages: List[Dict[str, str]],
+        tools: List[Dict[str, Any]],
+        tool_choice: str = "auto",
+    ) -> Tuple[str, List[ToolCall]]:
+        return _openai_chat_tool_call(
+            self._client, self.model_name, messages, tools, tool_choice,
+            max_tokens=self.max_new_tokens, stream=True,
+        )

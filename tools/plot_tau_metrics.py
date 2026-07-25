@@ -80,7 +80,7 @@ def main():
     df_filtered = df_filtered[df_filtered['Model'] != 'gemini-2.5-flash-lite']
 
     # Plot
-    plt.figure(figsize=(8, 3.5))
+    plt.figure(figsize=(6, 3))
     
     models = df_filtered['Model'].unique()
     
@@ -93,7 +93,7 @@ def main():
     # Sort models by average score descending
     sorted_models = sorted(models, key=lambda x: model_avg_scores[x], reverse=True)
 
-    y_offsets = [0.000, 0.01, 0.002, -0.01, 0.004]
+    y_offsets = [0.005, 0.01, 0.002, 0.005, 0.004]
     
     for idx, model in enumerate(sorted_models):
         model_data = df_filtered[df_filtered['Model'] == model]
@@ -101,17 +101,18 @@ def main():
         plt.plot(model_data['tau_weak'], model_data['Average Score'], marker='o', label=label)
         
         # Add value annotations
-        for x, y in zip(model_data['tau_weak'], model_data['Average Score']):
-            plt.text(x, y + y_offsets[idx], f"{y:.3f}", ha='center', va='bottom', fontsize=11)
+        # if idx == 0:
+        #     for x, y in zip(model_data['tau_weak'], model_data['Average Score']):
+        #         plt.text(x, y + y_offsets[idx], f"{y:.3f}", ha='center', va='bottom', fontsize=)
         
     plt.xlabel('τ')
     plt.ylabel('Average Score')
-    plt.title('Model Performance on different threshold τ values')
+    # plt.title('Model Performance on different threshold τ values')
     # Move legend up from lower left
-    plt.legend(loc='lower left', bbox_to_anchor=(0, 0))
+    plt.legend(loc='lower left', bbox_to_anchor=(0, 0), ncol=2)
     plt.grid(True, linestyle='--', alpha=0.7)
-    plt.xticks(target_taus)
-    plt.ylim(0.15, 0.525)
+    plt.xticks(target_taus, [str(t).replace('0.', '.') for t in target_taus])
+    plt.ylim(0.14, 0.525)
 
     plt.tight_layout()
     plt.savefig(output_pdf, format='pdf')

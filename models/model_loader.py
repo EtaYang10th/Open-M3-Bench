@@ -12,6 +12,7 @@ from .api_clients import (
     TogetherAPIClient,
     ZhipuAPIClient,
     GrokAPIClient,
+    CursorAPIClient,
 )
 
 
@@ -46,6 +47,12 @@ def create_model_driver(model_spec: str, max_new_tokens: int = 2048):
         return QwenLocalDriver(model_path=model_spec, max_new_tokens=max_new_tokens)
 
     else:
+        # Cursor / custom OpenAI-compatible endpoint route: "cursor:<model>".
+        # Routes to CURSOR_API_BASE_URL / CURSOR_API_KEY (e.g. apicursor.com).
+        # Checked before the '/'-based Together route so model names may contain '/'.
+        if spec_lower.startswith("cursor:"):
+            real_model = model_spec.split(":", 1)[1]
+            return CursorAPIClient(model_name=real_model, max_new_tokens=max_new_tokens)
         # Together route: any model name containing '/'
         if ("/" in model_spec):
             return TogetherAPIClient(model_name=model_spec, max_new_tokens=max_new_tokens)
